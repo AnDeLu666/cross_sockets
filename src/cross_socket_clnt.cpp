@@ -3,12 +3,14 @@
 namespace cross_socket
 {
 
-    CrossSocketClnt::CrossSocketClnt(unsigned int port)
-    : CrossSocket(port)
+    CrossSocketClnt::CrossSocketClnt()
+    : CrossSocket(0)
     {}
 
-    void CrossSocketClnt::Connect()
+    void CrossSocketClnt::Connect(unsigned int port)
     {
+        _port = port;
+
         _address.sin_port = htons(_port);
 
         //convert IPv4 and IPv6 addresses from text to binary 

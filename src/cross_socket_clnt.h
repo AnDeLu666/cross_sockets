@@ -11,9 +11,9 @@ namespace cross_socket
 
 
     public:
-        CrossSocketClnt(unsigned int port);
+        CrossSocketClnt();
 
-        void Connect();
+        void Connect(unsigned int port);
         void Disconnect();
 
         ~CrossSocketClnt();

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdio>
-#include <cstring>
+#include <cstring> //todo remove after if add int length to method Send
 #include <thread>
 
 #ifdef _WIN32
@@ -44,7 +44,7 @@ enum ConnType
 class CrossSocket
 {
 protected:
-    int _conn_s = -20, _socket, _valread;
+    int _conn_s = -20, _socket;
     
     Status _status = EMPTY;
 
@@ -59,12 +59,16 @@ protected:
     char *_buffer;
 
 public:
+    unsigned int _recieved_bytes = 0;
+    u_int32_t _data_size; //no more then 4 bytes
+
     CrossSocket(unsigned int port);
     
+    char * GetBuffer();
     int GetConn_s();
     Status GetStatus();
     
-    void Send(const char * message);
+    void Send(const char *data);
     void Recv();
     
     void CloseSocket();

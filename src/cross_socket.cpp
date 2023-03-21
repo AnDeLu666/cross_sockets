@@ -18,6 +18,11 @@ namespace cross_socket
         _address.sin_family = AF_INET;
     }
 
+    char * CrossSocket::GetBuffer()
+    {
+        return _buffer;
+    }
+
     int CrossSocket::GetConn_s()
     {
         return _conn_s;
@@ -28,16 +33,21 @@ namespace cross_socket
         return _status;
     }
 
-    void CrossSocket::Send(const char * message)
+    void CrossSocket::Send(const char * data) //todo check what faster strlen or size
     {
-        send(_conn_s, message, std::strlen(message), 0);
-        printf("message has been send \n");
+        _data_size = std::strlen(data);
+        //send data size
+        send(_conn_s, (char*)&_data_size, sizeof(u_int32_t), 0);
+        //send data
+        send(_conn_s, data, std::strlen(data), 0);
     }
 
     void CrossSocket::Recv()
     {
-        _valread = read(_conn_s, _buffer, _buff_size);
-        printf("%s \n", _buffer);
+        //receive data size
+        read(_conn_s, (char*)&_data_size, sizeof(u_int32_t));
+        //recieve data
+        _recieved_bytes = read(_conn_s, _buffer, _data_size);
     }
 
     void CrossSocket::CloseSocket()

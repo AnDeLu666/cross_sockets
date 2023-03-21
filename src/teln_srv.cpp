@@ -4,18 +4,15 @@
 #include <chrono>
 
 
-
 int main(int argc, char const *argv[])
 {
-    const char *login = "login\n";
+    std::string login = "login\n";
 
     std::string user_pass = "root:1";
 
     cross_socket::CrossSocketSrv srv(8666);
 
     srv.Start();
-    int dbg_k = srv.GetConn_s();
-    printf("server started %d\n", dbg_k);
 
     while(srv.GetStatus() == cross_socket::Status::EMPTY)
     {
@@ -24,9 +21,14 @@ int main(int argc, char const *argv[])
 
     if(srv.GetStatus() == cross_socket::Status::ACCEPTED)
     {
-        srv.Recv();
+        while (srv.GetBuffer() != "exit")
+        {
+            srv.Recv();
 
-        srv.Send(login);
+            printf("get buffer %s\n", srv.GetBuffer());
+
+            srv.Send(login.c_str());
+        }
     }
 
     return 0;
