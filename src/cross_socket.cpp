@@ -2,12 +2,83 @@
 
 namespace cross_socket
 {
+        //class connections
+    Connection::Connection(int conn_socket)
+    : _conn_socket(conn_socket)
+    {}
+
+    int Connection::Send(const char *data) 
+    {
+        u_int32_t data_size = std::strlen(data); //no more then 4 bytes
+        
+        // send data size
+        int res = send(_conn_socket, (char *)&data_size, sizeof(u_int32_t), 0);
+        
+        if(res > 0)
+        {   
+            if(data_size > 0)
+            {
+                // send data
+                res = send(_conn_socket, data, std::strlen(data), 0);
+            }
+        }
+        
+        printf("send res %d \n", res);
+
+        return res;
+    }
+
+    int Connection::Recv()
+    {
+        u_int32_t data_size = 0; //no more then 4 bytes
+
+        //clear previous memory ????
+        _buffer = nullptr;
+
+        // receive data size
+        int recieved_bytes = read(_conn_socket, (char *)&data_size, sizeof(u_int32_t));
+
+        if(recieved_bytes > 0)
+        {   
+            if(data_size > 0)
+            {
+                _buffer = std::shared_ptr<char[]>(new char[data_size + 1]{0}, std::default_delete<char[]>());
+                // recieve data
+                recieved_bytes = read(_conn_socket, &_buffer[0], data_size);
+
+                printf("recieved bytes %d ds %d \n", recieved_bytes, data_size);
+            }
+        }
+
+        return recieved_bytes;
+    }
+
+    void Connection::CloseSocket()
+    {
+    #ifdef _WIN32
+        closesocket(_conn_socket);
+        WSACleanup();
+    #else    
+        close(_conn_socket);  // close connection socket 
+        shutdown(_conn_socket, SHUT_RDWR);  // close listen socket ???
+    #endif
+    }
+
+    char * Connection::GetBuffer()
+    {
+        return &_buffer[0];
+    }
+
+    Connection::~Connection()
+    {
+        printf("conn_destr \n");
+        this->CloseSocket();
+    }
+    //end class connections
 
     CrossSocket::CrossSocket(unsigned int port)
     : _port(port)
-    {
-        _buffer = new char[_buff_size]{};
-        
+    {   
         // Creating socket file descriptor
         if((_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
         {
@@ -18,47 +89,9 @@ namespace cross_socket
         _address.sin_family = AF_INET;
     }
 
-    char * CrossSocket::GetBuffer()
-    {
-        return _buffer;
-    }
-
-    int CrossSocket::GetConn_s()
-    {
-        return _conn_s;
-    }
-
     Status CrossSocket::GetStatus()
     {
         return _status;
-    }
-
-    void CrossSocket::Send(const char * data) //todo check what faster strlen or size
-    {
-        _data_size = std::strlen(data);
-        //send data size
-        send(_conn_s, (char*)&_data_size, sizeof(u_int32_t), 0);
-        //send data
-        send(_conn_s, data, std::strlen(data), 0);
-    }
-
-    void CrossSocket::Recv()
-    {
-        //receive data size
-        read(_conn_s, (char*)&_data_size, sizeof(u_int32_t));
-        //recieve data
-        _recieved_bytes = read(_conn_s, _buffer, _data_size);
-    }
-
-    void CrossSocket::CloseSocket()
-    {
-    #ifdef _WIN32
-        closesocket(_conn_s);
-        WSACleanup();
-    #else    
-        close(_conn_s);  // close connection socket 
-        shutdown(_conn_s, SHUT_RDWR);  // close listen socket ???
-    #endif
     }
 
     CrossSocket::~CrossSocket()

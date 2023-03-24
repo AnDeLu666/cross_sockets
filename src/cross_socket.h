@@ -1,8 +1,10 @@
 #pragma once
 
 #include <cstdio>
-#include <cstring> //todo remove after if add int length to method Send
+#include <cstring> 
 #include <thread>
+#include <map>
+#include <memory>
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -18,62 +20,77 @@
 namespace cross_socket
 {
 
-enum Status
-{
-    EMPTY,
-    ACCEPTED,
-    CONNECTION_ERROR,
-    CONNECTED,
-    INVALID_IP_ERROR,
-    SOCK_ACCEPT_ERROR,
-    SOCK_BIND_ERROR,
-    SOCK_INIT_ERROR,
-    SOCK_LISTENING,
-    SOCK_LISTEN_ERROR,
-    SOCK_SETOPT_ERROR,
-};
+    enum Status
+    {
+        EMPTY,
+        SOCK_ACCEPT_CONNECTION,
+        ACCEPTED_START_HANDLER,
+        CONNECTION_ERROR,
+        CONNECTED,
+        INVALID_IP_ERROR,
+        SOCK_ACCEPT_ERROR,
+        SOCK_BIND_ERROR,
+        SOCK_INIT_ERROR,
+        SOCK_LISTENING,
+        SOCK_LISTEN_ERROR,
+        SOCK_SETOPT_ERROR,
+        STOP
+    };
 
-//type of initialization of a SOCKET
-enum ConnType
-{
-    CLIENT,
-    SERVER   
-};
+    //type of initialization of a SOCKET
+    // enum ConnType
+    // {
+    //     CLIENT,
+    //     SERVER   
+    // };
 
 
-class CrossSocket
-{
-protected:
-    int _conn_s = -20, _socket;
-    
-    Status _status = EMPTY;
+    class Connection
+    {
+    private:
+        std::shared_ptr<char[]> _buffer = nullptr;
+        
+        void CloseSocket();
 
-    unsigned int _buff_size{1024}, _port{8666};
+    public:
+        std::thread _thread;
+        int _conn_socket;
 
-    struct sockaddr_in _address;
+        Connection(int conn_socket);
+        
+        int Send(const char *data);
+        int Recv();
 
-    const int _opt = 1;
+        char * GetBuffer();
 
-    int _addrlen = sizeof(_address);
+        ~Connection();
+    };
 
-    char *_buffer;
+    typedef std::map<const char*,  std::shared_ptr<Connection>> ConnectionsMap;
 
-public:
-    unsigned int _recieved_bytes = 0;
-    u_int32_t _data_size; //no more then 4 bytes
+    class CrossSocket
+    {
+    protected:
+        int _socket = -20;
+        
+        Status _status = EMPTY;
 
-    CrossSocket(unsigned int port);
-    
-    char * GetBuffer();
-    int GetConn_s();
-    Status GetStatus();
-    
-    void Send(const char *data);
-    void Recv();
-    
-    void CloseSocket();
+        unsigned int _port{8666};
 
-    virtual ~CrossSocket();
-};
+        struct sockaddr_in _address;
+
+        const int _opt = 1;
+
+        int _addrlen = sizeof(_address);
+
+    public:
+        ConnectionsMap _connections;  
+
+        CrossSocket(unsigned int port);
+        
+        Status GetStatus();
+
+        virtual ~CrossSocket();
+    };
 
 }//end namespace cross_socket

@@ -9,11 +9,14 @@ class CrossSocketSrv: public CrossSocket
 {
 private:
     std::thread _accept_thread;
+
     void AcceptConnection();
 
 public:
     CrossSocketSrv(unsigned int port);
 
+    void ConnectionHandler(); //(Connection *clnt);
+    
     void Start();
     void Stop();
 

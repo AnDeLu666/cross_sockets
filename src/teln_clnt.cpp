@@ -9,19 +9,16 @@ int main(int argc, char const* argv[])
     
     cross_socket::CrossSocketClnt clnt;
 
-    printf("client started");
+    printf("enter command : \n");
 
     clnt.Connect(8666);
-
-    printf("send data  %s\n", data.c_str());
     
     while(data != "exit")
     {
        std::getline(std::cin, data);
 
-       clnt.Send(data.c_str()); 
-       
-       clnt.Recv();
+       clnt.ConnectionHandler(data.c_str());
+
     }
 
     return 0;

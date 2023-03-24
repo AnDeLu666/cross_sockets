@@ -13,6 +13,8 @@ namespace cross_socket
     public:
         CrossSocketClnt();
 
+        void ConnectionHandler(const char* data); //(Connection *srv, const char* data);
+
         void Connect(unsigned int port);
         void Disconnect();
 

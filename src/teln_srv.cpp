@@ -13,23 +13,26 @@ int main(int argc, char const *argv[])
     cross_socket::CrossSocketSrv srv(8666);
 
     srv.Start();
-
-    while(srv.GetStatus() == cross_socket::Status::EMPTY)
+    
+    while(srv._connections.size() < 1)
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
+    
+    std::thread t1([&srv](){
+        srv.ConnectionHandler();
+    });
+    t1.detach();
+  
+    // srv._connections["0"]->thread_id.detach();
 
-    if(srv.GetStatus() == cross_socket::Status::ACCEPTED)
+
+    while(srv.GetStatus() != cross_socket::STOP)
     {
-        while (srv.GetBuffer() != "exit")
-        {
-            srv.Recv();
-
-            printf("get buffer %s\n", srv.GetBuffer());
-
-            srv.Send(login.c_str());
-        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        printf("server is running \n");
     }
-
+    
+    printf("the end \n");
     return 0;
 }
