@@ -2,6 +2,7 @@
 
 #include <cstdio>
 #include <cstring> 
+#include <string>
 #include <thread>
 #include <map>
 #include <memory>
@@ -48,7 +49,7 @@ namespace cross_socket
     class Connection
     {
     private:
-        std::shared_ptr<char[]> _buffer = nullptr;
+        std::shared_ptr<char []> _buffer = nullptr;
         
         void CloseSocket();
 
@@ -58,7 +59,7 @@ namespace cross_socket
 
         Connection(int conn_socket);
         
-        int Send(const char *data);
+        int Send(const char* data);
         int Recv();
 
         char * GetBuffer();
@@ -66,7 +67,7 @@ namespace cross_socket
         ~Connection();
     };
 
-    typedef std::map<const char*,  std::shared_ptr<Connection>> ConnectionsMap;
+    typedef std::map<std::string,  std::shared_ptr<Connection>> ConnectionsMap;
 
     class CrossSocket
     {

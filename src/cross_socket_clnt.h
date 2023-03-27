@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cross_socket.h"
+#include <iostream>
 
 namespace cross_socket
 {
@@ -13,7 +14,7 @@ namespace cross_socket
     public:
         CrossSocketClnt();
 
-        void ConnectionHandler(const char* data); //(Connection *srv, const char* data);
+        void ConnectionHandler(std::string index); //, char* data); 
 
         void Connect(unsigned int port);
         void Disconnect();

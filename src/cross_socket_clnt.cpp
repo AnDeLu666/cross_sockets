@@ -7,12 +7,26 @@ namespace cross_socket
     : CrossSocket(0)
     {}
 
-    void CrossSocketClnt::ConnectionHandler(const char* data) //(Connection *srv, const char* data)
+    void CrossSocketClnt::ConnectionHandler(std::string index) //, char* data) 
     {
-        std::shared_ptr<Connection> srv = _connections["0"];
-        printf("sent to server bytes %d\n",  srv->Send(data)); 
+        std::string data;
 
-        srv->Recv();
+        printf("index = %s enter command : \n", index.c_str());
+        
+        while(data != "exit")
+        {
+            std::getline(std::cin, data);
+
+            if(_connections[index]->Send(data.c_str()) > 0)
+            {
+                if(_connections[index]->Recv() <= 0)
+                {
+                    perror("Server isn't available\n");      
+                } 
+            }
+        }
+
+        _status = cross_socket::STOP;
     }
 
     void CrossSocketClnt::Connect(unsigned int port)
@@ -37,9 +51,10 @@ namespace cross_socket
         {
             _status = CONNECTED;
             
-            _connections["0"] = std::make_shared<Connection>(_socket);
-            //_connections["0"]->thread_id = std::thread(&CrossSocketClnt::ConnectionHandler, this->_connections["0"]);
-            //_connections["0"]->thread_id.detach();
+            std::string index = std::to_string(_socket);
+            _connections[index] = std::make_shared<Connection>(_socket);
+            _connections[index]->_thread = std::thread(&CrossSocketClnt::ConnectionHandler, this, index);
+            _connections[index]->_thread.detach();
         }
     }
 
@@ -53,7 +68,7 @@ namespace cross_socket
         ConnectionsMap::iterator it = _connections.begin();
         for( ; it != _connections.end(); it++)
         {
-            printf("con %s \n", it->first);
+            printf("con %s \n", it->first.c_str());
         }
 
         printf("cltd_destr \n");

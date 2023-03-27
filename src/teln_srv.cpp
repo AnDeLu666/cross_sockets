@@ -1,6 +1,5 @@
 #include "cross_socket_srv.h"
 
-#include <string>
 #include <chrono>
 
 
@@ -18,13 +17,6 @@ int main(int argc, char const *argv[])
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
-    
-    std::thread t1([&srv](){
-        srv.ConnectionHandler();
-    });
-    t1.detach();
-  
-    // srv._connections["0"]->thread_id.detach();
 
 
     while(srv.GetStatus() != cross_socket::STOP)

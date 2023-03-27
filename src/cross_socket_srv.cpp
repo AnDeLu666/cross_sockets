@@ -20,22 +20,23 @@ namespace cross_socket
         }
         else
         {
-            _connections["0"] = std::make_shared<Connection>(conn_socket);
+            std::string index = std::to_string(conn_socket);
+            _connections[index] = std::make_shared<Connection>(conn_socket);
+            _connections[index]->_thread = std::thread(&CrossSocketSrv::ConnectionHandler, this, index);
+            _connections[index]->_thread.detach();
 
             AcceptConnection();
         }
     }
 
-    void CrossSocketSrv::ConnectionHandler()
+    void CrossSocketSrv::ConnectionHandler(std::string index)
     {
-        std::shared_ptr<Connection> clnt = _connections["0"];
-
-        while (clnt->Recv() > 0)
+        while (_connections[index]->Recv() > 0)
         {
-            printf("received from client : %s %d\n", clnt->GetBuffer(), clnt->_conn_socket);
-            clnt->Send("\0");
+            printf("received from client : %s %d\n", _connections[index]->GetBuffer(), _connections[index]->_conn_socket);
+            _connections[index]->Send("\0");
             
-            if(std::strcmp(clnt->GetBuffer(), "exit1") == 0)
+            if(std::strcmp(_connections[index]->GetBuffer(), "exit1") == 0)
             {
                 printf("break\n");
                 break;

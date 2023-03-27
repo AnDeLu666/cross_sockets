@@ -7,46 +7,48 @@ namespace cross_socket
     : _conn_socket(conn_socket)
     {}
 
-    int Connection::Send(const char *data) 
+    int Connection::Send(const char* data) 
     {
         u_int32_t data_size = std::strlen(data); //no more then 4 bytes
         
-        // send data size
-        int res = send(_conn_socket, (char *)&data_size, sizeof(u_int32_t), 0);
+        printf("connn -------------------- %d \n", _conn_socket);
+        // send data size  if sent_bytes 0 - client has been disconnecter -1 error
+        int sent_bytes = send(_conn_socket, (const char *)&data_size, sizeof(u_int32_t), 0);
+        //printf("sent_bytes 1st  %d \n", sent_bytes);
         
-        if(res > 0)
+        if(sent_bytes > 0)
         {   
+            printf("get in  data_size  %d \n", data_size);
             if(data_size > 0)
             {
                 // send data
-                res = send(_conn_socket, data, std::strlen(data), 0);
+                sent_bytes = send(_conn_socket, data, data_size, 0);
             }
         }
         
-        printf("send res %d \n", res);
+        printf("sent_bytes %d \n", sent_bytes);
 
-        return res;
+        return sent_bytes;
     }
 
     int Connection::Recv()
     {
         u_int32_t data_size = 0; //no more then 4 bytes
 
-        //clear previous memory ????
-        _buffer = nullptr;
-
-        // receive data size
+        // receive data size if recieved_bytes 0 - client has been disconnecter -1 error
         int recieved_bytes = read(_conn_socket, (char *)&data_size, sizeof(u_int32_t));
 
+        printf("recieved bytes data size%d ds %d \n", recieved_bytes, data_size);
         if(recieved_bytes > 0)
         {   
             if(data_size > 0)
             {
-                _buffer = std::shared_ptr<char[]>(new char[data_size + 1]{0}, std::default_delete<char[]>());
+                _buffer = std::shared_ptr<char []>(new char[data_size + 1]{'\0'}, std::default_delete<char []>());
                 // recieve data
-                recieved_bytes = read(_conn_socket, &_buffer[0], data_size);
+                recieved_bytes = read(_conn_socket, _buffer.get(), data_size);
 
                 printf("recieved bytes %d ds %d \n", recieved_bytes, data_size);
+
             }
         }
 
@@ -66,7 +68,7 @@ namespace cross_socket
 
     char * Connection::GetBuffer()
     {
-        return &_buffer[0];
+        return _buffer.get();
     }
 
     Connection::~Connection()

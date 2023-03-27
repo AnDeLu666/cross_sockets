@@ -15,7 +15,7 @@ private:
 public:
     CrossSocketSrv(unsigned int port);
 
-    void ConnectionHandler(); //(Connection *clnt);
+    void ConnectionHandler(std::string index);
     
     void Start();
     void Stop();
