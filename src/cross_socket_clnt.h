@@ -12,7 +12,7 @@ namespace cross_socket
 
 
     public:
-        CrossSocketClnt();
+        CrossSocketClnt(int socket_type);
 
         void ConnectionHandler(std::string index); //, char* data); 
 

@@ -11,7 +11,7 @@ SRC_DIR = ./src/
 OBJ_DIR = ./obj/
 BIN_DIR = ./build/
 
-INCL_LIBS = $(OBJ_DIR)cross_socket.o
+INCL_LIBS = $(OBJ_DIR)cross_socket.o $(OBJ_DIR)cross_socket_common.o $(OBJ_DIR)cross_socket_conn.o
 
 INCL_CLNT = $(OBJ_DIR)cross_socket_clnt.o
 

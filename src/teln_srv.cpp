@@ -5,11 +5,9 @@
 
 int main(int argc, char const *argv[])
 {
-    std::string login = "login\n";
-
     std::string user_pass = "root:1";
 
-    cross_socket::CrossSocketSrv srv(8666);
+    cross_socket::CrossSocketSrv srv(TCP, 8666);
 
     srv.Start();
     
@@ -19,12 +17,12 @@ int main(int argc, char const *argv[])
     }
 
 
-    while(srv.GetStatus() != cross_socket::STOP)
+    while(srv._continue_work)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        printf("server is running \n");
+        //printf("server is running \n");
     }
     
-    printf("the end \n");
+    PRINT_DBG("the end \n");
     return 0;
 }
