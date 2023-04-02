@@ -1,9 +1,13 @@
-#include "cross_socket_clnt.h"
-
+#include "cross_socket_clnt_tcp.h"
+#include "cross_socket_clnt_udp.h"
 
 int main(int argc, char const* argv[]) 
 {   
-    cross_socket::CrossSocketClnt clnt(TCP);
+    //cross_socket::CrossSocketClnt clnt(TCP);
+
+    //clnt.Connect(8666);
+   
+    cross_socket::CrossSocketClntUDP clnt;
 
     clnt.Connect(8666);
 

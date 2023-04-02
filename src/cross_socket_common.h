@@ -24,7 +24,7 @@
 #endif
 
 #define TCP SOCK_STREAM
-#define UDP SOCK_STREAM
+#define UDP SOCK_DGRAM
 
 namespace cross_socket
 {
@@ -41,9 +41,10 @@ namespace cross_socket
         SOCK_UNKNOWN_TYPE
     };
 
-    SocketError Server_Init(int socket, int port, int opt, struct sockaddr_in& address);
+    SocketError Server_InitTCP(int socket, int port, int opt, struct sockaddr_in& address);
+    SocketError Server_Bind(int socket, int port, sockaddr_in &address);
 
-    int TCP_Send(std::shared_ptr<Connection> cur_conn);
-    int TCP_Recv(std::shared_ptr<Connection> cur_conn);
+    //int CommonSend(std::shared_ptr<Connection> cur_conn);
+    //int CommonRecv(std::shared_ptr<Connection> cur_conn);
 
 }//end namespace cross_socket

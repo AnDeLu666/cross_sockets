@@ -5,24 +5,24 @@
 namespace cross_socket
 {
 
-class CrossSocketSrv: public CrossSocket
+class CrossSocketSrv
 {
-private:
-    int _port;
+    protected:
+        std::thread _accept_thread;
 
-    std::thread _accept_thread;
+        unsigned int _port;
 
-    void AcceptConnection();
+        virtual void AcceptConnection() = 0;
 
-public:
-    CrossSocketSrv(int socket_type, unsigned int port);
+    public:
+        CrossSocketSrv(unsigned int port);
 
-    void ConnectionHandler(std::string index);
-    
-    void Start();
-    void Stop();
+        virtual void ConnectionHandler(std::string index) = 0;
+        
+        virtual void Start() = 0;
+        void Stop();
 
-    ~CrossSocketSrv();
+        ~CrossSocketSrv();
 };
 
 }//end namespace cross_socket

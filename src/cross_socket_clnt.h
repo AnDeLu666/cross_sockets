@@ -6,20 +6,15 @@
 namespace cross_socket
 {
 
-    class CrossSocketClnt : public CrossSocket
+    class CrossSocketClnt 
     {
-    private:
+        public:
+            virtual void ConnectionHandler(std::string index) = 0; 
 
+            virtual void Connect(unsigned int port) = 0;
+            virtual void Disconnect() = 0;
 
-    public:
-        CrossSocketClnt(int socket_type);
-
-        void ConnectionHandler(std::string index); //, char* data); 
-
-        void Connect(unsigned int port);
-        void Disconnect();
-
-        ~CrossSocketClnt();
+            ~CrossSocketClnt();
 
     };
 

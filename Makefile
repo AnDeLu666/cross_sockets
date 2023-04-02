@@ -13,9 +13,9 @@ BIN_DIR = ./build/
 
 INCL_LIBS = $(OBJ_DIR)cross_socket.o $(OBJ_DIR)cross_socket_common.o $(OBJ_DIR)cross_socket_conn.o
 
-INCL_CLNT = $(OBJ_DIR)cross_socket_clnt.o
+INCL_CLNT = $(OBJ_DIR)cross_socket_clnt.o $(OBJ_DIR)cross_socket_clnt_udp.o $(OBJ_DIR)cross_socket_clnt_tcp.o
 
-INCL_SRV = $(OBJ_DIR)cross_socket_srv.o
+INCL_SRV = $(OBJ_DIR)cross_socket_srv.o $(OBJ_DIR)cross_socket_srv_tcp.o $(OBJ_DIR)cross_socket_srv_udp.o
 
 SRC = $(wildcard $(SRC_DIR)*.cpp)
 OBJ = $(patsubst $(SRC_DIR)%.cpp, $(OBJ_DIR)%.o, $(SRC))

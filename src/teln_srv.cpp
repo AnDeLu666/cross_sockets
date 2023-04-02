@@ -1,4 +1,5 @@
-#include "cross_socket_srv.h"
+#include "cross_socket_srv_tcp.h"
+#include "cross_socket_srv_udp.h"
 
 #include <chrono>
 
@@ -7,7 +8,7 @@ int main(int argc, char const *argv[])
 {
     std::string user_pass = "root:1";
 
-    cross_socket::CrossSocketSrv srv(TCP, 8666);
+    cross_socket::CrossSocketSrvUDP srv(8666);
 
     srv.Start();
     

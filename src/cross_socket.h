@@ -26,6 +26,9 @@ namespace cross_socket
         
         SocketError GetSockError();
 
+        int Recv(std::string conn_indx, struct sockaddr_in& address);
+        int Send(std::string conn_indx, struct sockaddr_in& address);
+
         virtual ~CrossSocket() = default;
     };
 
