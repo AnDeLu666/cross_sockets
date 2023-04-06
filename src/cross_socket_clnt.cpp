@@ -5,7 +5,7 @@ namespace cross_socket
 
     CrossSocketClnt::~CrossSocketClnt()
     {
-        PRINT_DBG("cltd_destr \n");
+        PRINT_DBG("clntd_destr \n");
     }
 
 

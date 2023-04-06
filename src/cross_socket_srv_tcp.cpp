@@ -11,13 +11,13 @@ namespace cross_socket
 
     void CrossSocketSrvTCP::AcceptConnection()
     {
-        int conn_socket;
+        Socket conn_socket;
 
         PRINT_DBG("accepting conn");
 
         int addrlen = sizeof(_address);
 
-        if ((conn_socket = accept(_socket, (struct sockaddr *)&_address, (socklen_t *)&addrlen)) < 0)
+        if ((conn_socket = accept(_socket, (struct sockaddr *)&_address, (Socklen_t *)&addrlen)) < 0)
         {
             perror("Socket accepting failed");
         }

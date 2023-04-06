@@ -6,8 +6,6 @@
 
 int main(int argc, char const *argv[])
 {
-    std::string user_pass = "root:1";
-
     cross_socket::CrossSocketSrvUDP srv(8666);
 
     srv.Start();

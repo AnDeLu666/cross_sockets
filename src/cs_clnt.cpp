@@ -6,10 +6,10 @@ int main(int argc, char const* argv[])
     //cross_socket::CrossSocketClnt clnt(TCP);
 
     //clnt.Connect(8666);
-   
+
     cross_socket::CrossSocketClntUDP clnt;
 
-    clnt.Connect(8666);
+    clnt.Connect("192.168.1.12", 8666);
 
     while(clnt._continue_work)
     {

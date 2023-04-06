@@ -1,15 +1,16 @@
 #pragma once
 
 #include "cross_socket_common.h"
+#include "cross_socket_conn.h"
 
 namespace cross_socket
 {
     class CrossSocket
     {
     protected:
-        int _socket_type;
+        int _socket_type = TCP;
 
-        int _socket = -20;
+        Socket _socket = -20;
         
         SocketError _sock_error = EMPTY;
 

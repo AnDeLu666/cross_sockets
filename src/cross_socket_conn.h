@@ -1,5 +1,4 @@
 #pragma once
-
 #include "cross_socket_common.h"
 
 namespace cross_socket
@@ -7,7 +6,7 @@ namespace cross_socket
     struct Buffer
     {
         char * data = nullptr;
-        u_int32_t size = 0; //no more then 4 bytes
+        uint32_t size = 0; //no more then 4 bytes
     };
 
     class Connection
@@ -19,16 +18,16 @@ namespace cross_socket
 
     public:
         std::thread _thread;
-        int _conn_socket;
+        Socket _conn_socket;
 
         Buffer _buffer_from;
 
-        Connection(int conn_socket);
+        Connection(Socket conn_socket);
 
         Buffer GetBufferFrom();
         
         Buffer* GetBufferTo();
-        void SetBufferTo(char* buffer_to, u_int32_t size);
+        void SetBufferTo(char* buffer_to, uint32_t size);
 
         ~Connection();
     };

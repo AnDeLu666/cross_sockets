@@ -12,7 +12,7 @@ namespace cross_socket
 
             void ConnectionHandler(std::string index); 
 
-            void Connect(unsigned int port);
+            void Connect(std::string ip_addr_str, unsigned int port);
             void Disconnect();
 
             ~CrossSocketClntTCP();

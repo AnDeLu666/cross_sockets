@@ -1,15 +1,15 @@
-#include "cross_socket_common.h"
+#include "cross_socket_conn.h"
 
 namespace cross_socket
 {
     //class connection ---------------------------------------------------
-    Connection::Connection(int conn_socket)
+    Connection::Connection(Socket conn_socket)
     : _conn_socket(conn_socket)
     {}
 
     void Connection::CloseSocket()
     {
-    #ifdef _WIN32
+    #ifdef _WIN64
         closesocket(_conn_socket);
         WSACleanup();
     #else    
@@ -28,7 +28,7 @@ namespace cross_socket
         return &_buffer_to;
     }
 
-    void Connection::SetBufferTo(char* buffer_to, u_int32_t size)
+    void Connection::SetBufferTo(char* buffer_to, uint32_t size)
     {
         _buffer_to.size = size; 
         _buffer_to.data = (char*)buffer_to;

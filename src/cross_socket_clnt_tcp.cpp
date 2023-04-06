@@ -2,6 +2,9 @@
 
 namespace cross_socket
 {
+    CrossSocketClntTCP::CrossSocketClntTCP()
+    : CrossSocket(TCP)
+    {}
 
     void CrossSocketClntTCP::ConnectionHandler(std::string index) //, char* data) 
     {
@@ -27,16 +30,17 @@ namespace cross_socket
         _continue_work = false;
     }
 
-    void CrossSocketClntTCP::Connect(unsigned int port)
+    void CrossSocketClntTCP::Connect(std::string ip_addr_str, unsigned int port)
     {
         _address.sin_port = htons(port);
 
-        //convert IPv4 and IPv6 addresses from text to binary 
-        if(inet_pton(AF_INET, "127.0.0.1", &_address.sin_addr) < 0)
-        {
-            perror("Invalid address/ Address not supported\n");
-            _sock_error = SocketError::INVALID_IP_ERROR;
-        }
+        //convert IPv4 and IPv6 addresses from text to binary       
+        _address.sin_addr.s_addr = inet_addr(ip_addr_str.c_str());
+        // if(inet_pton(AF_INET, "127.0.0.1", &_address.sin_addr) < 0)
+        // {
+        //     perror("Invalid address/ Address not supported\n");
+        //     _sock_error = SocketError::INVALID_IP_ERROR;
+        // }
 
         if(connect(_socket, (struct sockaddr*)&_address, sizeof(_address)) < 0)
         {
@@ -58,7 +62,7 @@ namespace cross_socket
 
     CrossSocketClntTCP::~CrossSocketClntTCP()
     {
-               ConnectionsMap::iterator it = _connections.begin();
+        ConnectionsMap::iterator it = _connections.begin();
         
         for( ; it != _connections.end(); it++)
         {

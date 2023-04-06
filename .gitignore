@@ -1,5 +1,7 @@
 .vscode/
-build/
-obj/
+build_linux/
+build_windows/
+obj_linux/
+obj_windows/
 a.out
 

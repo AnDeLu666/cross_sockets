@@ -11,7 +11,7 @@ namespace cross_socket
         public:
             virtual void ConnectionHandler(std::string index) = 0; 
 
-            virtual void Connect(unsigned int port) = 0;
+            virtual void Connect(std::string ip_addr_str, unsigned int port) = 0;
             virtual void Disconnect() = 0;
 
             ~CrossSocketClnt();

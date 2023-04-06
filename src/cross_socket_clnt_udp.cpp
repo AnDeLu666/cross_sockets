@@ -30,24 +30,25 @@ namespace cross_socket
         _continue_work = false;
     }
 
-    void CrossSocketClntUDP::Connect(unsigned int port)
+    void CrossSocketClntUDP::Connect(std::string ip_addr_str, unsigned int port)
     {
         _address.sin_port = htons(port);
 
         PRINT_DBG("connect : \n");
         //convert IPv4 and IPv6 addresses from text to binary 
-        if(inet_pton(AF_INET, "127.0.0.1", &_address.sin_addr.s_addr) < 0)
-        {
-            perror("Invalid address/ Address not supported\n");
-            _sock_error = SocketError::INVALID_IP_ERROR;
-        }
-        else
-        {   
+        _address.sin_addr.s_addr = inet_addr(ip_addr_str.c_str()); //TODO optimize
+        // if(inet_pton(AF_INET, "127.0.0.1", &_address.sin_addr.s_addr) < 0)
+        // {
+        //     perror("Invalid address/ Address not supported\n");
+        //     _sock_error = SocketError::INVALID_IP_ERROR;
+        // }
+        // else
+        // {   
             std::string index = std::to_string(_socket);
             _connections[index] = std::make_shared<Connection>(_socket);
             _connections[index]->_thread = std::thread(&CrossSocketClntUDP::ConnectionHandler, this, index);
             _connections[index]->_thread.detach();
-        }
+        //}
     }
 
     void CrossSocketClntUDP::Disconnect()
