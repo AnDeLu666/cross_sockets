@@ -7,4 +7,7 @@ finally I plan to make it as archive which I(or might be u, after change some so
 connect to my project for leaving all deal with sockets to above code.
 
 <h2>Installation</h2>
-Clone it or download and start make
+Clone it or download and start make or make win
+To clean all type "make clean"
+
+gcc and mingw must be installed!!!
