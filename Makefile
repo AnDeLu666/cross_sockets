@@ -21,7 +21,7 @@ BIN_DIR = ./build_linux/
 INCL_LIBS = $(OBJ_DIR)cross_socket.o $(OBJ_DIR)cross_socket_common.o $(OBJ_DIR)cross_socket_conn.o
 INCL_CLNT = $(OBJ_DIR)cross_socket_clnt.o $(OBJ_DIR)cross_socket_clnt_udp.o $(OBJ_DIR)cross_socket_clnt_tcp.o
 INCL_SRV = $(OBJ_DIR)cross_socket_srv.o $(OBJ_DIR)cross_socket_srv_tcp.o $(OBJ_DIR)cross_socket_srv_udp.o
-
+LIB_HEADERS_DIR = ./cross_socket_lib_h/
 
 OBJ_DIR_WIN = ./obj_windows/
 BIN_DIR_WIN = ./build_windows/
@@ -30,6 +30,7 @@ INCL_CLNT_WIN = $(OBJ_DIR_WIN)cross_socket_clnt.o $(OBJ_DIR_WIN)cross_socket_cln
 INCL_SRV_WIN = $(OBJ_DIR_WIN)cross_socket_srv.o $(OBJ_DIR_WIN)cross_socket_srv_tcp.o $(OBJ_DIR_WIN)cross_socket_srv_udp.o
 
 SRC = $(wildcard $(SRC_DIR)*.cpp)
+HEADERS = $(wildcard $(SRC_DIR)*.h)
 OBJ = $(patsubst $(SRC_DIR)%.cpp, $(OBJ_DIR)%.o, $(SRC))
 OBJ_WIN = $(patsubst $(SRC_DIR)%.cpp, $(OBJ_DIR_WIN)%.o, $(SRC))
 #BIN = $(patsubst $(SRC_DIR)%.cpp, $(BIN_DIR)%, $(SRC))
@@ -41,7 +42,7 @@ all : if_folders_not_exist $(OBJ) $(BIN)
 win : if_folders_not_exist $(OBJ_WIN) $(BIN_WIN) 
 
 clean :
-	rm -rf $(BIN_DIR)*  $(OBJ_DIR)*.o $(BIN_DIR_WIN)*  $(OBJ_DIR_WIN)*.o
+	rm -rf $(BIN_DIR)*  $(OBJ_DIR)*.o $(BIN_DIR_WIN)*  $(OBJ_DIR_WIN)*.o $(LIB_HEADERS_DIR)*
 
 if_folders_not_exist :
 	if [ ! -d "$(OBJ_DIR)" ]; \
@@ -58,6 +59,10 @@ if_folders_not_exist :
 
 	if [ ! -d "$(BIN_DIR_WIN)" ]; \
 		then mkdir $(BIN_DIR_WIN); \
+	fi
+
+	if [ ! -d "$(LIB_HEADERS_DIR)" ]; \
+		then mkdir $(LIB_HEADERS_DIR); \
 	fi
 
 		
@@ -86,3 +91,8 @@ $(BIN_DIR_WIN)$(TARGET21) : $(OBJ_WIN)
 
 $(BIN_DIR_WIN)$(TARGET22) : $(OBJ_WIN)
 		$(CC_mingw) -D_WIN64 $(OBJ_DIR_WIN)$(TARGET12).o $(INCL_LIBS_WIN) $(INCL_CLNT_WIN) -o $@ $(LINKED_LIBS)
+
+
+nix_lib_all : $(OBJ)
+		ar rvs $(LIB_HEADERS_DIR)lib_cross_socket1.a $(INCL_LIBS) $(INCL_SRV) $(INCL_CLNT) 
+		cp -r $(HEADERS) $(LIB_HEADERS_DIR)

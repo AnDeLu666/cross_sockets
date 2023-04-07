@@ -6,18 +6,4 @@ namespace cross_socket
     :_port(port)
     {}
 
-    void CrossSocketSrv::Stop()
-    {
-        if (_accept_thread.joinable())
-        {
-            _accept_thread.join();
-        }
-    }
-
-    CrossSocketSrv::~CrossSocketSrv()
-    {
-        PRINT_DBG("srv_destr \n");
-        this->Stop();
-    }
-
 } // end namespace cross_socket

@@ -12,7 +12,7 @@ namespace cross_socket
         else
         {
             WIN_(WSADATA WSAData;) //some data
-            WIN_(WSAStartup(MAKEWORD(2, 0), &WSAData);)
+            WIN_(WSAStartup(MAKEWORD(2, 0), &WSAData);) //initialize sockets
 
             PRINT_DBG("socket type : %s \n", (_socket_type == TCP)? "TCP" : "UDP");
             // Creating socket file descriptor

@@ -9,9 +9,6 @@ class CrossSocketSrvUDP: public CrossSocketSrv, public CrossSocket
 {
     private:
         struct sockaddr_in _srv_addr;
-
-        void AcceptConnection()
-        {};
     
     public:
         CrossSocketSrvUDP(unsigned int port);
@@ -19,6 +16,9 @@ class CrossSocketSrvUDP: public CrossSocketSrv, public CrossSocket
         void ConnectionHandler(std::string index);
 
         void Start();
+        void Stop()
+        {};
+
 };
 
 }//end namespace cross_socket

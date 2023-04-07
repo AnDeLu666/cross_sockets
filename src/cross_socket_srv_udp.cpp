@@ -44,7 +44,7 @@ namespace cross_socket
 
         if((_sock_error = cross_socket::Server_Bind(_socket, _port, _srv_addr)) == SocketError::EMPTY)
         {
-            std::string index = std::to_string(_socket);
+            std::string index = std::to_string(_socket); //TODO if more 1 client (now only 1 socket and connection)
         
             _connections[index] = std::make_shared<Connection>(_socket);
             _connections[index]->_thread = std::thread(&CrossSocketSrvUDP::ConnectionHandler, this, index);

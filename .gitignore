@@ -3,5 +3,6 @@ build_linux/
 build_windows/
 obj_linux/
 obj_windows/
+cross_socket_lib_h/
 a.out
 

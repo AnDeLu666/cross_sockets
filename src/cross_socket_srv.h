@@ -8,11 +8,7 @@ namespace cross_socket
 class CrossSocketSrv
 {
     protected:
-        std::thread _accept_thread;
-
         unsigned int _port;
-
-        virtual void AcceptConnection() = 0;
 
     public:
         CrossSocketSrv(unsigned int port);
@@ -20,9 +16,9 @@ class CrossSocketSrv
         virtual void ConnectionHandler(std::string index) = 0;
         
         virtual void Start() = 0;
-        void Stop();
+        virtual void Stop() = 0;
 
-        ~CrossSocketSrv();
+        virtual ~CrossSocketSrv() = default;
 };
 
 }//end namespace cross_socket

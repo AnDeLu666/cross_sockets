@@ -6,7 +6,7 @@
 
 int main(int argc, char const *argv[])
 {
-    cross_socket::CrossSocketSrvUDP srv(8666);
+    cross_socket::CrossSocketSrvTCP srv(8666);
 
     srv.Start();
     

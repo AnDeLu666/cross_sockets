@@ -8,6 +8,8 @@ namespace cross_socket
 class CrossSocketSrvTCP: public CrossSocketSrv, public CrossSocket
 {
     private:
+        std::thread _accept_thread;
+
         void AcceptConnection();
 
     public:
@@ -16,6 +18,11 @@ class CrossSocketSrvTCP: public CrossSocketSrv, public CrossSocket
         void ConnectionHandler(std::string index);
         
         void Start();
+
+        void Stop();
+
+        
+        ~CrossSocketSrvTCP();
 
 };
 

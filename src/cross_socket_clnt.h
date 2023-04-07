@@ -1,7 +1,6 @@
 #pragma once
 
 #include "cross_socket.h"
-#include <iostream>
 
 namespace cross_socket
 {

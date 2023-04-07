@@ -62,4 +62,26 @@ namespace cross_socket
         }
     }
 
+    void CrossSocketSrvTCP::Stop()
+    {
+        if (_accept_thread.joinable())
+        {
+            _accept_thread.join();
+        }
+
+        #ifdef _WIN64
+            closesocket(_socket);
+            WSACleanup();
+        #else    
+            close(_socket);  // close main(listen) socket 
+            shutdown(_socket, SHUT_RDWR); 
+        #endif
+    }
+
+    CrossSocketSrvTCP::~CrossSocketSrvTCP()
+    {
+        PRINT_DBG("TCPsrv_destr \n");
+        this->Stop();
+    }
+
 } // end namespace cross_socket
