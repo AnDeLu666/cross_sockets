@@ -3,7 +3,7 @@
 namespace cross_socket
 {
     // begin Servers init ------------------------------------
-    SocketError Server_InitTCP(Socket socket, int port, int opt, struct sockaddr_in& address)
+    SocketError Server_InitTCP(Socket socket, uint16_t port, int opt, struct sockaddr_in& address)
     {
         SocketError error_ = SocketError::EMPTY;
 
@@ -26,7 +26,7 @@ namespace cross_socket
         return error_;
     }
 
-    SocketError Server_Bind(Socket socket, int port, sockaddr_in& address)
+    SocketError Server_Bind(Socket socket, uint16_t port, sockaddr_in& address)
     {
         address.sin_port = htons(port);
 

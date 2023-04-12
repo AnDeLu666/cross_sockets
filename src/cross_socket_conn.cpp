@@ -9,6 +9,8 @@ namespace cross_socket
 
     void Connection::CloseSocket()
     {
+        if(_conn_socket >= 0 )
+        {
     #ifdef _WIN64
         closesocket(_conn_socket);
         WSACleanup();
@@ -16,23 +18,9 @@ namespace cross_socket
         close(_conn_socket);  // close connection socket 
         shutdown(_conn_socket, SHUT_RDWR);  // close listen socket ???
     #endif
+        }
     }
 
-    Buffer Connection::GetBufferFrom()
-    {
-        return _buffer_from;
-    }
-    
-    Buffer* Connection::GetBufferTo()
-    {
-        return &_buffer_to;
-    }
-
-    void Connection::SetBufferTo(char* buffer_to, uint32_t size)
-    {
-        _buffer_to.size = size; 
-        _buffer_to.data = (char*)buffer_to;
-    }
 
     Connection::~Connection()
     {

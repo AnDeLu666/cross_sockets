@@ -6,31 +6,37 @@ namespace cross_socket
     : CrossSocket(UDP)
     {}
 
-    void CrossSocketClntUDP::ConnectionHandler(std::string index)
+    void CrossSocketClntUDP::MainHandler(std::string index)
     {
         std::string data;
 
-        PRINT_DBG("index = %s enter command : \n", index.c_str());
+        PRINT_DBG("clnt index = %s enter command : \n", index.c_str());
         
         while(data != "exit")
         {
             std::getline(std::cin, data);
 
-            _connections[index]->SetBufferTo((char*)data.c_str(), data.size());
+            cross_socket::Buffer send_buff = {(char*)data.c_str(), (uint32_t)data.size()};
 
-            if(Send(index, _address) > 0)
+            PRINT_DBG("send_buff : %s \n", send_buff.data);
+
+            if(Send(_connections[index]->_conn_socket, send_buff, _address) > 0)
             {
-                if(Recv(index, _address) <= 0)
+                auto recv_buff = Recv(_socket, _address);
+                if(recv_buff.real_bytes < 0)
                 {
                     perror("Server isn't available\n");      
                 } 
+
+                const char *ip = inet_ntoa(_address.sin_addr);
+                uint16_t port = htons(_address.sin_port);
+                PRINT_DBG("received from server : %s port %d \n", ip, port);
             }
         }
 
-        _continue_work = false;
     }
 
-    void CrossSocketClntUDP::Connect(std::string ip_addr_str, unsigned int port)
+    void CrossSocketClntUDP::Connect(std::string ip_addr_str, uint16_t port)
     {
         _address.sin_port = htons(port);
 
@@ -46,7 +52,7 @@ namespace cross_socket
         // {   
             std::string index = std::to_string(_socket);
             _connections[index] = std::make_shared<Connection>(_socket);
-            _connections[index]->_thread = std::thread(&CrossSocketClntUDP::ConnectionHandler, this, index);
+            _connections[index]->_thread = std::thread(&CrossSocketClntUDP::MainHandler, this, index);
             _connections[index]->_thread.detach();
         //}
     }

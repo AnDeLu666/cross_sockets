@@ -8,16 +8,13 @@ namespace cross_socket
 class CrossSocketSrvTCP: public CrossSocketSrv, public CrossSocket
 {
     private:
-        std::thread _accept_thread;
-
-        void AcceptConnection();
+        void AcceptHandler();
+        void Start_();
 
     public:
-        CrossSocketSrvTCP(unsigned int port);
+        CrossSocketSrvTCP(uint16_t port);
 
-        void ConnectionHandler(std::string index);
-        
-        void Start();
+        void MainHandler(std::string index);
 
         void Stop();
 

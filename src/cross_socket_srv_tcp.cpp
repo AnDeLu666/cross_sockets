@@ -5,11 +5,11 @@
 
 namespace cross_socket
 {
-    CrossSocketSrvTCP::CrossSocketSrvTCP(unsigned int port)
+    CrossSocketSrvTCP::CrossSocketSrvTCP(uint16_t port)
         : CrossSocketSrv(port), CrossSocket(TCP)
     {}
 
-    void CrossSocketSrvTCP::AcceptConnection()
+    void CrossSocketSrvTCP::AcceptHandler()
     {
         Socket conn_socket;
 
@@ -25,57 +25,46 @@ namespace cross_socket
         {
             std::string index = std::to_string(conn_socket);
             _connections[index] = std::make_shared<Connection>(conn_socket);
-            _connections[index]->_thread = std::thread(&CrossSocketSrvTCP::ConnectionHandler, this, index);
+            _connections[index]->_thread = std::thread(&CrossSocketSrvTCP::MainHandler, this, index);
             _connections[index]->_thread.detach();
 
-            AcceptConnection();
+            AcceptHandler();
         }
     }
 
-    void CrossSocketSrvTCP::ConnectionHandler(std::string index)
+    void CrossSocketSrvTCP::MainHandler(std::string index) //separate thread for each client
     {
-        while (Recv(index, _address) > 0)
+        while (_status != SrvStatuses::STOP)
         {
-            PRINT_DBG("received from client : %s %d\n", _connections[index]->GetBufferFrom().data, _connections[index]->_conn_socket);
-            _connections[index]->SetBufferTo((char*)"\0", 1);
-
-            Send(index, _address);
-            
-            if(std::strcmp(_connections[index]->GetBufferFrom().data, "exit1") == 0)
+            auto recv_buff = Recv(_connections[index]->_conn_socket, _address);
+            if (recv_buff.size <= 0)
             {
-                PRINT_DBG("break\n");
-                break;
+                //when make asynchronous request add sleep
+            }
+            else
+            {
+                PRINT_DBG("received data from client : %s socket: %d\n", recv_buff.data, _connections[index]->_conn_socket);
+
+                struct cross_socket::Buffer send_buff = {(char*)"\0", 1};
+
+                Send(_connections[index]->_conn_socket, send_buff, _address);
             }
         }
-
-        _continue_work = false;
-
     }
 
-    void CrossSocketSrvTCP::Start()
+    void CrossSocketSrvTCP::Start_()
     {
         if(cross_socket::Server_InitTCP(_socket, _port, _opt, _address) == SocketError::EMPTY)
         {
             // start accepting connections
-            _accept_thread = std::thread(&CrossSocketSrvTCP::AcceptConnection, this);
+            _accept_thread = std::thread(&CrossSocketSrvTCP::AcceptHandler, this);
             _accept_thread.detach();
         }
     }
 
     void CrossSocketSrvTCP::Stop()
     {
-        if (_accept_thread.joinable())
-        {
-            _accept_thread.join();
-        }
-
-        #ifdef _WIN64
-            closesocket(_socket);
-            WSACleanup();
-        #else    
-            close(_socket);  // close main(listen) socket 
-            shutdown(_socket, SHUT_RDWR); 
-        #endif
+        //delete all connections
     }
 
     CrossSocketSrvTCP::~CrossSocketSrvTCP()

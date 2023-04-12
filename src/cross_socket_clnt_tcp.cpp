@@ -6,7 +6,7 @@ namespace cross_socket
     : CrossSocket(TCP)
     {}
 
-    void CrossSocketClntTCP::ConnectionHandler(std::string index) //, char* data) 
+    void CrossSocketClntTCP::MainHandler(std::string index) //, char* data) 
     {
         std::string data;
 
@@ -16,21 +16,21 @@ namespace cross_socket
         {
             std::getline(std::cin, data);
 
-            _connections[index]->SetBufferTo((char*)data.c_str(), data.size());
+            cross_socket::Buffer send_buff = {(char*)data.c_str(), (uint32_t)data.size()};
 
-            if(Send(index, _address) > 0)
+            if(Send(_connections[index]->_conn_socket, send_buff, _address) > 0)
             {
-                if(Recv(index, _address) <= 0)
+                auto recv_buff = Recv(_socket, _address);
+                if(recv_buff.real_bytes <= 0)
                 {
                     perror("Server isn't available\n");      
                 } 
             }
         }
 
-        _continue_work = false;
     }
 
-    void CrossSocketClntTCP::Connect(std::string ip_addr_str, unsigned int port)
+    void CrossSocketClntTCP::Connect(std::string ip_addr_str, uint16_t port)
     {
         _address.sin_port = htons(port);
 
@@ -51,7 +51,7 @@ namespace cross_socket
         {   
             std::string index = std::to_string(_socket);
             _connections[index] = std::make_shared<Connection>(_socket);
-            _connections[index]->_thread = std::thread(&CrossSocketClntTCP::ConnectionHandler, this, index);
+            _connections[index]->_thread = std::thread(&CrossSocketClntTCP::MainHandler, this, index);
             _connections[index]->_thread.detach();
         }
     }

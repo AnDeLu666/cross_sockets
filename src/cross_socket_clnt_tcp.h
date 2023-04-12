@@ -10,9 +10,9 @@ namespace cross_socket
         public:
             CrossSocketClntTCP();
 
-            void ConnectionHandler(std::string index); 
+            void MainHandler(std::string index); 
 
-            void Connect(std::string ip_addr_str, unsigned int port);
+            void Connect(std::string ip_addr_str, uint16_t port);
             void Disconnect();
 
             ~CrossSocketClntTCP();

@@ -4,21 +4,23 @@
 
 namespace cross_socket
 {
+    class CrossSocketSrvUDP: public CrossSocketSrv, public CrossSocket
+    {
+        private:
+            struct sockaddr_in _srv_addr;
 
-class CrossSocketSrvUDP: public CrossSocketSrv, public CrossSocket
-{
-    private:
-        struct sockaddr_in _srv_addr;
-    
-    public:
-        CrossSocketSrvUDP(unsigned int port);
+            void Start_();
+            void AcceptHandler();
         
-        void ConnectionHandler(std::string index);
+        public:
+            CrossSocketSrvUDP(uint16_t port);
 
-        void Start();
-        void Stop()
-        {};
+            void MainHandler(std::string index);
 
-};
+            void Stop()
+            {};
+
+            ~CrossSocketSrvUDP();
+    };
 
 }//end namespace cross_socket

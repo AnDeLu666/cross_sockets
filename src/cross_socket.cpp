@@ -2,10 +2,11 @@
 
 namespace cross_socket
 {
-    CrossSocket::CrossSocket(int socket_type)
-    : _socket_type(socket_type)
-    {   
-        if(socket_type != TCP && socket_type != UDP)
+    Socket CrossSocket::InitNewSocket()
+    {
+        Socket socket_tmp = -20;
+
+        if(_socket_type != TCP && _socket_type != UDP)
         {
             _sock_error = SocketError::SOCK_UNKNOWN_TYPE;
         }
@@ -16,16 +17,24 @@ namespace cross_socket
 
             PRINT_DBG("socket type : %s \n", (_socket_type == TCP)? "TCP" : "UDP");
             // Creating socket file descriptor
-            if((_socket = socket(AF_INET,_socket_type, 0)) < 0)
+            if((socket_tmp = socket(AF_INET,_socket_type, 0)) < 0)
             {
                 perror("Socket init failure");
                 _sock_error = SocketError::SOCK_INIT_ERROR;
             }
-
-            //using in all types of servers and udp client
-            _address.sin_family    = AF_INET; // IPv4
-            _address.sin_addr.s_addr = INADDR_ANY;
         }
+        
+        return socket_tmp;
+    }
+
+    CrossSocket::CrossSocket(int socket_type)
+    : _socket_type(socket_type)
+    {   
+        _socket = InitNewSocket();
+
+        //using in all types of servers and udp client
+        _address.sin_family    = AF_INET; // IPv4
+        _address.sin_addr.s_addr = INADDR_ANY;
     }
 
     SocketError CrossSocket::GetSockError()
@@ -33,110 +42,115 @@ namespace cross_socket
         return _sock_error;
     }
 
-    int CrossSocket::Recv(std::string conn_indx, struct sockaddr_in& address)
+    
+    cross_socket::Buffer CrossSocket::Recv(Socket recv_sock, struct sockaddr_in& address) 
     {
-        int recieved_bytes = 0;
-
         uint32_t data_size = 0; // no more then 4 bytes
 
         Socklen_t len = sizeof(address);
 
-        auto conn = _connections[conn_indx];
-                
+        struct cross_socket::Buffer buff = {nullptr, 0, -1};
+
         // receive data size if recieved_bytes 0 - client has been disconnecter -1 error
         if(_socket_type == TCP)
         {
-            recieved_bytes = recv(conn->_conn_socket, (char *)&data_size, sizeof(uint32_t), 0);
+            buff.real_bytes = recv(recv_sock, (char *)&data_size, sizeof(uint32_t), 0);
         } 
         else if(_socket_type == UDP)
         {
             //winsocks do not support MSG_WAITALL for UDP(SOCK_DGRAM) sockets
-            recieved_bytes = recvfrom(conn->_conn_socket, (char *)&data_size, sizeof(uint32_t), 
+            buff.real_bytes = recvfrom(recv_sock, (char *)&data_size, sizeof(uint32_t), 
                                         0 NIX_(| MSG_WAITALL), ( struct sockaddr *) &address, &len);
         }
 
-        if (recieved_bytes > 0)
+        if (buff.real_bytes > 0)
         {
-            PRINT_DBG("recieved bytes data size%d ds %d \n", recieved_bytes, data_size);
+            PRINT_DBG("recieved bytes data size %d ds %d \n", buff.real_bytes, data_size);
             
             if (data_size > 0)
             {
-                conn->_buffer_from.data = new char[data_size + 1]{'\0'};
-                conn->_buffer_from.size = data_size;
+                buff = {new char[data_size + 1]{'\0'}, data_size};
 
                 // recieve data 
                 if(_socket_type == TCP)
                 {
-                    recieved_bytes = recv(conn->_conn_socket, conn->_buffer_from.data, data_size, 0);
+                    buff.real_bytes = recv(recv_sock, buff.data, data_size, 0);
                 } 
                 else if(_socket_type == UDP)
                 {
                     //winsocks do not support MSG_WAITALL for UDP(SOCK_DGRAM) sockets
-                    recieved_bytes = recvfrom(conn->_conn_socket, conn->_buffer_from.data, data_size, 
-                                                0 NIX_(| MSG_WAITALL), ( struct sockaddr *) &address, &len);
+                    buff.real_bytes = recvfrom(recv_sock, buff.data, data_size, 0 NIX_(| MSG_WAITALL), 
+                                                ( struct sockaddr *) &address, &len);
                 }
 
-                if(recieved_bytes > 0)
+                if(buff.real_bytes > 0)
                 {
-                    PRINT_DBG("recieved bytes %d size %d \n", recieved_bytes, data_size);
+                    PRINT_DBG("recieved bytes 2nd part %d data size %d \n", buff.real_bytes, data_size);
+                    //todo if recieved_bytes != data_size
                 }
+                else
+                {
+                    buff = {nullptr, 0};
+                }
+
             }
         }
 
-        return recieved_bytes;
+        return buff;
     }
 
-    int CrossSocket::Send(std::string conn_indx, struct sockaddr_in& address)
+    int CrossSocket::Send(Socket send_sock, struct Buffer& buff, struct sockaddr_in& address)
     {
-        int sent_bytes = 0;
-
         Socklen_t len = sizeof(address);
-
-        auto conn = _connections[conn_indx];
-
-        struct Buffer *buff = conn->GetBufferTo();
-
-        PRINT_DBG("data -------------------- %s \n", buff->data);
-
-        PRINT_DBG("data size-------------------- %d \n", buff->size);
 
         // send data size  if sent_bytes 0 - client has been disconnecter -1 error
         if(_socket_type == TCP)
         {
-            PRINT_DBG("tcp %d \n", conn->_conn_socket);
-            sent_bytes = send(conn->_conn_socket, (const char *)&buff->size, sizeof(uint32_t), 0);
+            buff.real_bytes = send(send_sock, (const char *)&buff.size, sizeof(uint32_t), 0);
         }
         else if(_socket_type == UDP)
         {
             //winsocks do not support MSG_WAITALL for UDP(SOCK_DGRAM) sockets
-            sent_bytes = sendto(conn->_conn_socket, (const char *)&buff->size, sizeof(uint32_t), 
+            buff.real_bytes = sendto(send_sock, (const char *)&buff.size, sizeof(uint32_t), 
                                  0 NIX_(| MSG_WAITALL), (const struct sockaddr *)&address, len);
         }
 
 
-        PRINT_DBG("sent_bytes 1st  %d \n", sent_bytes);
+        PRINT_DBG("sent_bytes 1st  %d \n", buff.real_bytes);
 
-        if (sent_bytes > 0)
+        if (buff.real_bytes > 0)
         {
-            if (buff->size > 0)
+            if (buff.size >= 0)
             {
                 // send data
                 if(_socket_type == TCP)
                 {
                     //winsocks do not support MSG_WAITALL for UDP(SOCK_DGRAM) sockets
-                    sent_bytes = send(conn->_conn_socket, buff->data, buff->size, 0);
+                    buff.real_bytes = send(send_sock, buff.data, buff.size, 0);
                 }
                 else if(_socket_type == UDP)
                 {
-                    sent_bytes = sendto(conn->_conn_socket, buff->data, buff->size, 
+                    buff.real_bytes = sendto(send_sock, buff.data, buff.size, 
                                         0 NIX_(| MSG_WAITALL), (const struct sockaddr *)&address, len);
                 }
             }
         }
 
-        PRINT_DBG("sent_bytes %d \n", sent_bytes);
+        PRINT_DBG("sent_bytes 2 %d \n", buff.real_bytes);
 
-        return sent_bytes;
+        return buff.real_bytes;
+    }
+
+    CrossSocket::~CrossSocket()
+    {
+        #ifdef _WIN64
+            closesocket(_socket);
+            WSACleanup();
+        #else    
+            close(_socket);  // close main(listen) socket 
+            shutdown(_socket, SHUT_RDWR); 
+        #endif
+        PRINT_DBG("CrossSocket destr \n");
     }
 
 } //end namespace cross_socket
