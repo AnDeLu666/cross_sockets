@@ -76,15 +76,9 @@ int main(int argc, char const *argv[])
     }
 
 
-    // if(std::strcmp(_connections[index]->GetBufferFrom().data, "exit1") == 0)
-    //         {
-    //             PRINT_DBG("break\n");
-    //             break;
-    //         }
     while(srv._status != cross_socket::SrvStatuses::STOP)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        //printf("server is running \n");
     }
     
     PRINT_DBG("the end \n");

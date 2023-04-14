@@ -1,12 +1,17 @@
 #pragma once
 
 #include "cross_socket_clnt.h"
-#include <iostream>
+
 
 namespace cross_socket
 {
     class CrossSocketClntTCP : public CrossSocketClnt, public CrossSocket
     {
+        private:
+            Socket GetNewSocket(){return CrossSocket::InitNewSocket();};
+
+            bool ConnectToSocket(Socket socket, struct sockaddr_in& address);
+
         public:
             CrossSocketClntTCP();
 

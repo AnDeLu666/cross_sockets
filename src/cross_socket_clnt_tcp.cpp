@@ -3,57 +3,59 @@
 namespace cross_socket
 {
     CrossSocketClntTCP::CrossSocketClntTCP()
-    : CrossSocket(TCP)
+    : CrossSocket(TCP, false)
     {}
 
     void CrossSocketClntTCP::MainHandler(std::string index) //, char* data) 
     {
-        std::string data;
-
-        PRINT_DBG("index = %s enter command : \n", index.c_str());
-        
-        while(data != "exit")
+        if(_connections.find(index) != _connections.end())
         {
-            std::getline(std::cin, data);
+            auto conn = _connections[index];
 
-            cross_socket::Buffer send_buff = {(char*)data.c_str(), (uint32_t)data.size()};
-
-            if(Send(_connections[index]->_conn_socket, send_buff, _address) > 0)
-            {
-                auto recv_buff = Recv(_socket, _address);
-                if(recv_buff.real_bytes <= 0)
+            while(conn->Get_status() == ConnStatuses::CONNECTED)//TODO status == connected
+            {       
+                if(conn->Get_send_buffer_ptr() != nullptr)
                 {
-                    perror("Server isn't available\n");      
-                } 
+                    if(Send(conn->Get_conn_socket(), conn->Get_send_buffer_ptr(), conn->Get_address_ptr()) > 0)
+                    {
+                        auto recv_buff = Recv(conn->Get_conn_socket(), conn->Get_address_ptr());
+                        if(recv_buff.real_bytes < 0) //todo think we really can receive 0 bytes
+                        {
+                            perror("Server isn't available or socket problem\n");      
+                        } 
+                        else if(recv_buff.real_bytes > 0 && recv_buff.real_bytes == static_cast<int>(recv_buff.size))
+                        {
+                            //operate received buffer in _main_handler_ptr()
+                        }
+                    }
+                    
+                    conn->Set_send_buffer_ptr(nullptr); //todo lost buffer
+                }
+                else
+                {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
             }
         }
 
     }
 
-    void CrossSocketClntTCP::Connect(std::string ip_addr_str, uint16_t port)
+    bool CrossSocketClntTCP::ConnectToSocket(Socket socket, struct sockaddr_in& address)
     {
-        _address.sin_port = htons(port);
-
-        //convert IPv4 and IPv6 addresses from text to binary       
-        _address.sin_addr.s_addr = inet_addr(ip_addr_str.c_str());
-        // if(inet_pton(AF_INET, "127.0.0.1", &_address.sin_addr) < 0)
-        // {
-        //     perror("Invalid address/ Address not supported\n");
-        //     _sock_error = SocketError::INVALID_IP_ERROR;
-        // }
-
-        if(connect(_socket, (struct sockaddr*)&_address, sizeof(_address)) < 0)
+        bool res = true;
+        if(connect(socket, (struct sockaddr*)&address, sizeof(address)) < 0)
         {
             perror("Connection failed\n");
             _sock_error = SocketError::CONNECTION_ERROR;
+            res = false;
         }
-        else
-        {   
-            std::string index = std::to_string(_socket);
-            _connections[index] = std::make_shared<Connection>(_socket);
-            _connections[index]->_thread = std::thread(&CrossSocketClntTCP::MainHandler, this, index);
-            _connections[index]->_thread.detach();
-        }
+
+        return res;
+    }
+
+    void CrossSocketClntTCP::Connect(std::string ip_addr_str, uint16_t port)
+    {
+        SharedConnectHandler(_connections, ip_addr_str, port);
     }
 
     void CrossSocketClntTCP::Disconnect()

@@ -2,7 +2,6 @@
 
 namespace cross_socket
 {
-    // begin Servers init ------------------------------------
     SocketError Server_InitTCP(Socket socket, uint16_t port, int opt, struct sockaddr_in& address)
     {
         SocketError error_ = SocketError::EMPTY;
@@ -41,6 +40,6 @@ namespace cross_socket
             return SocketError::EMPTY;
         }
     }
-    // end Servers init --------------------------------------
+
 
 } // end namespace cross_socket

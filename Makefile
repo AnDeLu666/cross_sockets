@@ -6,7 +6,7 @@ TARGET12 = cs_clnt
 TARGET21 = cs_srv.exe
 TARGET22 = cs_clnt.exe
 
-#CFLAGS = -Wall -g
+CFLAGS = -Wall -g
 
 CC = g++
 
@@ -80,6 +80,9 @@ $(BIN_DIR)$(TARGET12) : $(OBJ)
 		
 dbg : 
 	$(CC) -g $(SRC_DIR)$(TARGET1).cpp $(INCL_LIBS) $(INCL_SRV)
+
+dbg_c : 
+	$(CC) -g $(SRC_DIR)$(TARGET12).cpp $(INCL_LIBS) $(INCL_CLNT)
 
 #win
 $(OBJ_WIN) : $(OBJ_DIR_WIN)%.o : $(SRC_DIR)%.cpp

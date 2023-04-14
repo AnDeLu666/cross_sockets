@@ -6,14 +6,12 @@
 namespace cross_socket
 {
     CrossSocketSrvTCP::CrossSocketSrvTCP(uint16_t port)
-        : CrossSocketSrv(port), CrossSocket(TCP)
+        : CrossSocketSrv(port), CrossSocket(TCP, true)
     {}
 
     void CrossSocketSrvTCP::AcceptHandler()
     {
         Socket conn_socket;
-
-        PRINT_DBG("accepting conn");
 
         int addrlen = sizeof(_address);
 
@@ -25,8 +23,9 @@ namespace cross_socket
         {
             std::string index = std::to_string(conn_socket);
             _connections[index] = std::make_shared<Connection>(conn_socket);
-            _connections[index]->_thread = std::thread(&CrossSocketSrvTCP::MainHandler, this, index);
-            _connections[index]->_thread.detach();
+            _connections[index]->Set_thread_ptr(std::make_shared<std::thread>(std::thread(&CrossSocketSrvTCP::MainHandler, this, index)));
+            _connections[index]->Get_thread_ptr()->detach();
+            _connections[index]->Set_status(ConnStatuses::CONNECTED);
 
             AcceptHandler();
         }
@@ -36,18 +35,16 @@ namespace cross_socket
     {
         while (_status != SrvStatuses::STOP)
         {
-            auto recv_buff = Recv(_connections[index]->_conn_socket, _address);
-            if (recv_buff.size <= 0)
+            auto recv_buff = Recv(_connections[index]->Get_conn_socket(), &_address);
+            if (recv_buff.real_bytes <= 0)
             {
-                //when make asynchronous request add sleep
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
             else
             {
-                PRINT_DBG("received data from client : %s socket: %d\n", recv_buff.data, _connections[index]->_conn_socket);
-
                 struct cross_socket::Buffer send_buff = {(char*)"\0", 1};
 
-                Send(_connections[index]->_conn_socket, send_buff, _address);
+                Send(_connections[index]->Get_conn_socket(), &send_buff, &_address);
             }
         }
     }

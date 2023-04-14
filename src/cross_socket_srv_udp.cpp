@@ -4,14 +4,12 @@
 namespace cross_socket
 {
     CrossSocketSrvUDP::CrossSocketSrvUDP(uint16_t port)
-        : CrossSocketSrv(port), CrossSocket(UDP)
+        : CrossSocketSrv(port), CrossSocket(UDP, true)
     {
     }
 
     void CrossSocketSrvUDP::Start_()
     {
-        _address.sin_port = htons(_port);
-
         _srv_addr.sin_family = AF_INET; // IPv4
         _srv_addr.sin_addr.s_addr = INADDR_ANY;
 
@@ -29,11 +27,9 @@ namespace cross_socket
     {
         struct cross_socket::Buffer recv_buff = {nullptr, 0, -1};
 
-        auto it = _connections.begin();
-
         while (_status != SrvStatuses::STOP)
         {
-            recv_buff = Recv(_socket, _address);
+            recv_buff = Recv(_socket, &_address);
             if (recv_buff.real_bytes <= 0)
             {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -65,7 +61,7 @@ namespace cross_socket
                     }
 
                     //send data to client
-                    Send(_socket, send_buff, _address);
+                    Send(_socket, &send_buff, &_address);
                 }
             }
         }

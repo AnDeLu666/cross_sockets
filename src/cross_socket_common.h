@@ -65,6 +65,14 @@ namespace cross_socket
         MAX_AUTH_DATA_SIZE_OVRLMT
     };
 
+    struct Buffer
+    {
+        char * data = nullptr;
+        uint32_t size = 0; //no more then 4 bytes
+        int real_bytes = 0; //received or sent from/to network
+    };
+    
+
     SocketError Server_InitTCP(Socket socket, uint16_t port, int opt, struct sockaddr_in &address);
     SocketError Server_Bind(Socket socket, uint16_t port, sockaddr_in &address);
 

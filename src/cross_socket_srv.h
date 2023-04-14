@@ -4,11 +4,14 @@
 
 namespace cross_socket
 {
-    enum SrvStatuses
+    struct SrvStatuses
     {
-        NEW,
-        STARTED,
-        STOP
+        enum SrvStatus
+        {
+            NEW,
+            STARTED,
+            STOP
+        };
     };
 
     class CrossSocketSrv
@@ -18,6 +21,7 @@ namespace cross_socket
             std::function<cross_socket::Buffer(std::string conn_indx, cross_socket::Buffer&)> _main_handler_ptr = nullptr;
             std::function<bool(cross_socket::Buffer&)> _auth_handler_ptr = [](cross_socket::Buffer& buff){ return true;};
 
+            struct sockaddr_in _address;
             uint16_t _port;
             
             virtual void Start_() = 0;
@@ -26,7 +30,7 @@ namespace cross_socket
             virtual void MainHandler(std::string index) = 0;
 
         public:
-            SrvStatuses _status = SrvStatuses::NEW;
+            SrvStatuses::SrvStatus _status = SrvStatuses::NEW;
             
             CrossSocketSrv(uint16_t port);
 

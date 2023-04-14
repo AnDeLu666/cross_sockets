@@ -5,13 +5,6 @@
 
 namespace cross_socket
 {
-    struct Buffer
-    {
-        char * data = nullptr;
-        uint32_t size = 0; //no more then 4 bytes
-        int real_bytes = 0; //received or sent from/to network
-    };
-
     class CrossSocket
     {
     protected:
@@ -21,8 +14,6 @@ namespace cross_socket
         
         SocketError _sock_error = EMPTY;
 
-        struct sockaddr_in _address;
-
         const int _opt = 1;
 
         Socket InitNewSocket();
@@ -30,12 +21,12 @@ namespace cross_socket
     public:
         ConnectionsMap _connections;  
 
-        CrossSocket(int socket_type);
+        CrossSocket(int socket_type, bool init_socket);
         
         SocketError GetSockError();
 
-        cross_socket::Buffer Recv(Socket recv_sock, struct sockaddr_in& address);
-        int Send(Socket send_sock, struct Buffer& buff, struct sockaddr_in& address);
+        cross_socket::Buffer Recv(Socket recv_sock, struct sockaddr_in* address);
+        int Send(Socket send_sock, struct Buffer* buff, struct sockaddr_in* address);
 
         ~CrossSocket();
     };
