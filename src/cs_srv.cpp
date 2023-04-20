@@ -17,39 +17,45 @@ void InitMyProtocolMethods()
     Methods_s.emplace("send_your_ip_port", m_send_your_ip_port);
 }
 
-bool AuthHandler(cross_socket::Buffer& buff)
+cross_socket::Buffer* ProtocolHandler(std::shared_ptr<cross_socket::Connection> conn, cross_socket::Buffer& buff)
 {
-    bool res = false;
-    std::string method = buff.data;
-
-    PRINT_DBG("AUTH --- %s \n", method.c_str());
-
-    if(method == "auth")
-    {
-        PRINT_DBG("AUTH true \n");
-        res = true;
-    }
+    cross_socket::Buffer* send_buff = new cross_socket::Buffer{};
     
-    return res;
-}
-
-cross_socket::Buffer ProtocolHandler(std::string conn_indx, cross_socket::Buffer& buff)
-{
-    cross_socket::Buffer send_buff = {nullptr, 0};
-
-    std::string key = buff.data;
-    auto it = Methods_s.find(key);
-
-    if(it != Methods_s.end())
+    
+    if(!buff.data.empty())
     {
-        switch (it->second)
+        //first request to server must be less MAX_AUTH_DATA_SIZE bytes
+        if((conn->Get_session_key() == "" && buff.data.size() <= cross_socket::MAX_AUTH_DATA_SIZE) || conn->Get_session_key() != "")
         {
-            case m_auth:
-            PRINT_DBG("Control protocol received data : %s \n", key.c_str());
-            break;
 
-            default:
-            break;
+            buff.data.push_back('\0'); //string have to finish with 0
+            std::string key = reinterpret_cast<const char*>(&(buff.data[0]));
+
+            std::string session_key ="";
+            const cross_socket::byte_t* tmp_bytes;
+
+            auto it = Methods_s.find(key);
+
+            if(it != Methods_s.end())
+            {
+                switch (it->second)
+                {
+                    case m_auth:
+                        PRINT_DBG("ProtocolHandler received auth req : %s \n", key.c_str());
+                        //TODO generate key
+                        session_key = "adfdsgsdg2774836422gsgdd_1";
+                        tmp_bytes = reinterpret_cast<const cross_socket::byte_t*>(session_key.c_str());
+
+                        conn->Set_session_key(session_key);
+
+                        send_buff->data.insert(send_buff->data.end(), tmp_bytes, tmp_bytes + session_key.size());
+                    break;
+
+                    default:
+                        send_buff->data.push_back(0);
+                    break;
+                }
+            }
         }
     }
 
@@ -62,12 +68,10 @@ int main(int argc, char const *argv[])
 
     InitMyProtocolMethods();
 
-    cross_socket::CrossSocketSrvTCP srv(8666); //create obj srv
+    cross_socket::CrossSocketSrvUDP srv(8666); //create obj srv
     
     //set functions to deal with clients
-    srv.Set_auth_handler_ptr(AuthHandler);
     srv.Set_main_handler_ptr(ProtocolHandler);
-
     srv.Start(); //sart server
     
     while(srv._connections.size() < 1)

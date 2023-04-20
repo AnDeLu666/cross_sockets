@@ -19,11 +19,11 @@ namespace cross_socket
                     if(Send(conn->Get_conn_socket(), conn->Get_send_buffer_ptr(), conn->Get_address_ptr()) > 0)
                     {
                         auto recv_buff = Recv(conn->Get_conn_socket(), conn->Get_address_ptr());
-                        if(recv_buff.real_bytes < 0) //todo think we really can receive 0 bytes
+                        if(recv_buff.real_bytes <= 0) //todo think we really can receive 0 bytes
                         {
                             perror("Server isn't available or socket problem\n");      
                         } 
-                        else if(recv_buff.real_bytes > 0 && recv_buff.real_bytes == static_cast<int>(recv_buff.size))
+                        else if(recv_buff.real_bytes > 0)
                         {
                             //operate received buffer in _main_handler_ptr()
                         }

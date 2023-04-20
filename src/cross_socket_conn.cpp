@@ -41,6 +41,16 @@ namespace cross_socket
         return  _thread_ptr;
     }
 
+    void Connection::Set_session_key(std::string session_key)
+    {
+        _session_key = session_key;
+    }
+    
+    std::string Connection::Get_session_key()
+    {
+        return _session_key;
+    }
+
     void Connection::Set_conn_socket(Socket socket)
     {
         _conn_socket = socket;

@@ -18,8 +18,7 @@ namespace cross_socket
     {
         protected:
             std::thread _accept_thread;
-            std::function<cross_socket::Buffer(std::string conn_indx, cross_socket::Buffer&)> _main_handler_ptr = nullptr;
-            std::function<bool(cross_socket::Buffer&)> _auth_handler_ptr = [](cross_socket::Buffer& buff){ return true;};
+            std::function<Buffer*(std::shared_ptr<Connection>, Buffer&)> _main_handler_ptr = nullptr;
 
             struct sockaddr_in _address;
             uint16_t _port;
@@ -37,8 +36,7 @@ namespace cross_socket
             bool Start();
             void Stop();
 
-            void Set_auth_handler_ptr(std::function<bool(cross_socket::Buffer&)> func_ptr);
-            void Set_main_handler_ptr(std::function<cross_socket::Buffer(std::string conn_indx, cross_socket::Buffer&)> func_ptr);
+            void Set_main_handler_ptr(std::function<Buffer*(std::shared_ptr<Connection>, Buffer&)> func_ptr);
 
             ~CrossSocketSrv();
     };

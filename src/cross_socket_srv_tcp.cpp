@@ -33,18 +33,22 @@ namespace cross_socket
 
     void CrossSocketSrvTCP::MainHandler(std::string index) //separate thread for each client
     {
+        cross_socket::Buffer * send_buff;
+        auto conn = _connections[index];
+        
         while (_status != SrvStatuses::STOP)
         {
-            auto recv_buff = Recv(_connections[index]->Get_conn_socket(), &_address);
+            auto recv_buff = Recv(conn->Get_conn_socket(), &_address);
             if (recv_buff.real_bytes <= 0)
             {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
             else
             {
-                struct cross_socket::Buffer send_buff = {(char*)"\0", 1};
 
-                Send(_connections[index]->Get_conn_socket(), &send_buff, &_address);
+                send_buff = _main_handler_ptr(conn, recv_buff);
+
+                Send(_connections[index]->Get_conn_socket(), send_buff, &_address);
             }
         }
     }

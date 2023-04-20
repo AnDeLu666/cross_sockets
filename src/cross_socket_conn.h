@@ -15,6 +15,7 @@ namespace cross_socket
     private:
         ConnStatuses _status = ConnStatuses::NEW;
         std::shared_ptr<std::thread> _thread_ptr = nullptr;
+        std::string _session_key = "";
 
         Socket _conn_socket;
         struct sockaddr_in* _address_ptr = nullptr; 
@@ -31,6 +32,9 @@ namespace cross_socket
 
         void Set_thread_ptr(std::shared_ptr<std::thread>);
         std::shared_ptr<std::thread> Get_thread_ptr();
+
+        void Set_session_key(std::string);
+        std::string Get_session_key();
 
         void Set_conn_socket(Socket);
         Socket Get_conn_socket();

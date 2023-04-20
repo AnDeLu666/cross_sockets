@@ -42,101 +42,153 @@ namespace cross_socket
     }
 
     
-    cross_socket::Buffer CrossSocket::Recv(Socket recv_sock, struct sockaddr_in* address) 
+    cross_socket::Buffer& CrossSocket::Recv(Socket recv_sock, sockaddr_in* address) 
     {
-        uint32_t data_size = 0; // no more then 4 bytes
+        return Recv(recv_sock, address, true); 
+    }
+
+    cross_socket::Buffer& CrossSocket::Recv(Socket recv_sock, sockaddr_in* address, bool buff_size_first) 
+    {
+        data_size_t data_size = DEFAULT_BUFFER_SIZE;
 
         Socklen_t len = sizeof(*address);
 
-        struct cross_socket::Buffer buff = {nullptr, 0, -1};
+        Buffer* buff = new cross_socket::Buffer{};
 
-        // receive data size if recieved_bytes 0 - client has been disconnecter -1 error
-        if(_socket_type == TCP)
+        if(buff_size_first) //do not receive size of future data
         {
-            buff.real_bytes = recv(recv_sock, (char *)&data_size, sizeof(uint32_t), 0);
-        } 
-        else if(_socket_type == UDP)
-        {
-            //winsocks do not support MSG_WAITALL for UDP(SOCK_DGRAM) sockets
-            buff.real_bytes = recvfrom(recv_sock, (char *)&data_size, sizeof(uint32_t), 
-                                        0 NIX_(| MSG_WAITALL), (struct sockaddr *)address, &len);
+            // receive data size if recieved_bytes 0 - client has been disconnecter -1 error
+            if(_socket_type == TCP)
+            {
+                buff->real_bytes = recv(recv_sock, reinterpret_cast<NIX_(byte_t)WIN_(char)*>(&data_size), sizeof(data_size_t), 0);
+            } 
+            else if(_socket_type == UDP)
+            {
+                //winsocks do not support MSG_WAITALL for UDP(SOCK_DGRAM) sockets
+                buff->real_bytes = recvfrom(recv_sock, reinterpret_cast<NIX_(byte_t)WIN_(char)*>(&data_size), sizeof(data_size_t), 
+                                            0 NIX_(| MSG_WAITALL), reinterpret_cast<sockaddr*>(address), &len);
+            }
         }
 
-        if (buff.real_bytes > 0)
+        if ((buff->real_bytes > 0 || !buff_size_first) && data_size > 0)
         {
-            PRINT_DBG("recieved bytes size %d ds %d \n", buff.real_bytes, data_size);
-            
-            if (data_size > 0)
-            {
-                buff = {new char[data_size + 1]{'\0'}, data_size};
+            buff->real_bytes = 0;
+            PRINT_DBG("recieved bytes size %lld ds %d \n", buff->real_bytes, data_size);
 
+            byte_t* buffer;
+            
+            uint32_t recv_bytes = 0;
+
+            //todo start time after change all to async
+            while (buff->real_bytes < data_size)
+            {
+                buffer = new byte_t[data_size]{'\0'};
                 // recieve data 
                 if(_socket_type == TCP)
                 {
-                    buff.real_bytes = recv(recv_sock, buff.data, data_size, 0);
+                    recv_bytes = recv(recv_sock, WIN_(reinterpret_cast<char*>)(buffer), data_size, 0);
                 } 
                 else if(_socket_type == UDP)
                 {
                     //winsocks do not support MSG_WAITALL for UDP(SOCK_DGRAM) sockets
-                    buff.real_bytes = recvfrom(recv_sock, buff.data, data_size, 0 NIX_(| MSG_WAITALL), 
-                                                ( struct sockaddr *)address, &len);
+                    recv_bytes = recvfrom(recv_sock, WIN_(reinterpret_cast<char*>)(buffer), data_size, 0 NIX_(| MSG_WAITALL), 
+                                                reinterpret_cast<sockaddr*>(address), &len);
                 }
+                
+                if(recv_bytes > 0 && recv_bytes <= data_size)
+                {
+                    buff->data.insert(buff->data.end(), buffer, buffer + recv_bytes);
+                    buff->real_bytes += recv_bytes;
+                    
+                    delete[] buffer;
+                } 
+                else 
+                {
+                    //todo add logic how to deal if recv_bytes > 0 but < received data_size
+                    delete[] buffer;
 
-                if(buff.real_bytes > 0)
-                {
-                    PRINT_DBG("recieved bytes %d data size %d \n", buff.real_bytes, data_size);
-                    //todo if recieved_bytes != data_size
-                }
-                else
-                {
-                    buff = {nullptr, 0};
+                    break;
                 }
 
             }
+
+            if(buff->real_bytes > 0)
+            {
+                PRINT_DBG("recieved bytes %lld data size %d \n", buff->real_bytes, data_size);
+                //todo if recieved_bytes != data_size
+            }
+            else
+            {
+                *buff = {};
+            }
         }
 
-        return buff;
+        return *buff;
     }
 
-    int CrossSocket::Send(Socket send_sock, struct Buffer* buff, struct sockaddr_in* address)
+
+    int CrossSocket::Send(Socket send_sock, Buffer* buff, sockaddr_in* address)
+    {
+        return Send(send_sock, buff, address, true);
+    }
+
+    int CrossSocket::Send(Socket send_sock, Buffer* buff, sockaddr_in* address, bool buff_size_first)
     {
         Socklen_t len = sizeof(*address);
 
-        // send data size  if sent_bytes 0 - client has been disconnecter -1 error
-        if(_socket_type == TCP)
-        {
-            buff->real_bytes = send(send_sock, (const char *)&buff->size, sizeof(uint32_t), 0);
-        }
-        else if(_socket_type == UDP)
-        {
-            //winsocks do not support MSG_WAITALL for UDP(SOCK_DGRAM) sockets
-            buff->real_bytes = sendto(send_sock, (const char *)&buff->size, sizeof(uint32_t), 
-                                 0 NIX_(| MSG_WAITALL), (const struct sockaddr *)address, len);
-        }
+        buff->real_bytes = 0;
 
+        if(buff->data.size() <= MAX_RECV_SEND_DATA_SIZE)
+        {   
+            data_size_t data_size = buff->data.size();
 
-        PRINT_DBG("sent_bytes size %d \n", buff->real_bytes);
+            //// test_use
+            // PRINT_DBG("list of accepted values\n");
+            // PRINT_DBG("data_size : %d \n", data_size);
+            // PRINT_DBG("buff->data : %s \n", reinterpret_cast<const char*>(&buff->data[0]));
+            // for(const byte_t x: buff->data)
+            //     PRINT_DBG("%c", char(x));
+            // PRINT_DBG("\n");
 
-        if (buff->real_bytes > 0)
-        {
-            if (buff->size >= 0)
+            if(buff_size_first) //do not send size of future data
             {
-                // send data
+                // send data size  if sent_bytes 0 - client has been disconnecter -1 error
                 if(_socket_type == TCP)
                 {
-                    //winsocks do not support MSG_WAITALL for UDP(SOCK_DGRAM) sockets
-                    buff->real_bytes = send(send_sock, buff->data, buff->size, 0);
+                    buff->real_bytes = send(send_sock, reinterpret_cast<const NIX_(byte_t)WIN_(char)*>(&data_size), sizeof(data_size_t), 0);
                 }
                 else if(_socket_type == UDP)
                 {
-                    buff->real_bytes = sendto(send_sock, buff->data, buff->size, 
-                                        0 NIX_(| MSG_WAITALL), (const struct sockaddr *)address, len);
+                    //winsocks do not support MSG_WAITALL for UDP(SOCK_DGRAM) sockets
+                    buff->real_bytes = sendto(send_sock, reinterpret_cast<const NIX_(byte_t)WIN_(char)*>(&data_size), sizeof(data_size_t), 
+                                        0 NIX_(| MSG_WAITALL), reinterpret_cast<sockaddr*>(address), len);
                 }
             }
+
+
+            PRINT_DBG("sent_bytes size %lld \n", buff->real_bytes);
+
+            if (buff->real_bytes > 0 || !buff_size_first)
+            {
+                if (data_size >= 0)
+                {
+                    // send data
+                    if(_socket_type == TCP)
+                    {
+                        //winsocks do not support MSG_WAITALL for UDP(SOCK_DGRAM) sockets
+                        buff->real_bytes = send(send_sock, WIN_(reinterpret_cast<char*>)(&buff->data[0]), data_size, 0);
+                    }
+                    else if(_socket_type == UDP)
+                    {
+                        buff->real_bytes = sendto(send_sock, WIN_(reinterpret_cast<char*>)(&buff->data[0]), data_size, 
+                                            0 NIX_(| MSG_WAITALL), reinterpret_cast<sockaddr*>(address), len);
+                    }
+                }
+            }
+
+            PRINT_DBG("sent_bytes data %lld \n", buff->real_bytes);
         }
-
-        PRINT_DBG("sent_bytes data %d \n", buff->real_bytes);
-
+        
         return buff->real_bytes;
     }
 

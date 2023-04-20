@@ -8,7 +8,9 @@
 #include <thread>
 #include <string>
 #include <functional>
+#include <vector>
 
+//#define _WIN64
 #ifdef _WIN64
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -49,7 +51,12 @@ typedef socklen_t Socklen_t;
 
 namespace cross_socket
 {
-    const uint16_t MAX_AUTH_DATA_SIZE = 1000; // in bytes TODO maybe limited receiving
+    typedef uint8_t byte_t;
+    typedef uint32_t data_size_t;
+
+    const uint16_t MAX_AUTH_DATA_SIZE = 1024; // in bytes TODO maybe limited receiving
+    const uint16_t DEFAULT_BUFFER_SIZE = 1024; // bytes read write to/from network when datasize is unknown
+    const data_size_t MAX_RECV_SEND_DATA_SIZE = 4294967295; //bytes
 
     enum SocketError
     {
@@ -67,9 +74,8 @@ namespace cross_socket
 
     struct Buffer
     {
-        char * data = nullptr;
-        uint32_t size = 0; //no more then 4 bytes
-        int real_bytes = 0; //received or sent from/to network
+        std::vector<byte_t> data;
+        long long int real_bytes = 0; //received or sent from/to network
     };
     
 

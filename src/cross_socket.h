@@ -25,8 +25,11 @@ namespace cross_socket
         
         SocketError GetSockError();
 
-        cross_socket::Buffer Recv(Socket recv_sock, struct sockaddr_in* address);
-        int Send(Socket send_sock, struct Buffer* buff, struct sockaddr_in* address);
+        cross_socket::Buffer& Recv(Socket recv_sock, sockaddr_in* address);
+        cross_socket::Buffer& Recv(Socket recv_sock, sockaddr_in* address, bool buff_size_first);
+
+        int Send(Socket send_sock, Buffer* buff, sockaddr_in* address);
+        int Send(Socket send_sock, Buffer* buff, sockaddr_in* address, bool buff_size_first);
 
         ~CrossSocket();
     };

@@ -23,7 +23,7 @@ namespace cross_socket
                         {
                             perror("Server isn't available or socket problem\n");      
                         } 
-                        else if(recv_buff.real_bytes > 0 && recv_buff.real_bytes == static_cast<int>(recv_buff.size))
+                        else if(recv_buff.real_bytes > 0)
                         {
                             //operate received buffer in _main_handler_ptr()
                         }

@@ -79,7 +79,7 @@ $(BIN_DIR)$(TARGET12) : $(OBJ)
 		$(CC) $(OBJ_DIR)$(TARGET12).o $(INCL_LIBS) $(INCL_CLNT) -o $@
 		
 dbg : 
-	$(CC) -g $(SRC_DIR)$(TARGET1).cpp $(INCL_LIBS) $(INCL_SRV)
+	$(CC) -g $(SRC_DIR)$(TARGET11).cpp $(INCL_LIBS) $(INCL_SRV)
 
 dbg_c : 
 	$(CC) -g $(SRC_DIR)$(TARGET12).cpp $(INCL_LIBS) $(INCL_CLNT)

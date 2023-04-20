@@ -29,12 +29,7 @@ namespace cross_socket
         }
     }
 
-    void CrossSocketSrv::Set_auth_handler_ptr(std::function<bool(cross_socket::Buffer&)> func_ptr)
-    {
-        _auth_handler_ptr = func_ptr;
-    }
-
-    void CrossSocketSrv::Set_main_handler_ptr(std::function<cross_socket::Buffer(std::string conn_indx, cross_socket::Buffer&)> func_ptr)
+    void CrossSocketSrv::Set_main_handler_ptr(std::function<Buffer*(std::shared_ptr<Connection>, Buffer&)> func_ptr)
     {
         _main_handler_ptr = func_ptr;
     }

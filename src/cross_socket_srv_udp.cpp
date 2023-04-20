@@ -25,7 +25,8 @@ namespace cross_socket
 
     void CrossSocketSrvUDP::AcceptHandler()
     {
-        struct cross_socket::Buffer recv_buff = {nullptr, 0, -1};
+        cross_socket::Buffer recv_buff{};
+        cross_socket::Buffer* send_buff;
 
         while (_status != SrvStatuses::STOP)
         {
@@ -36,39 +37,27 @@ namespace cross_socket
             }
             else
             {
-                if(recv_buff.size <= MAX_AUTH_DATA_SIZE) //first request to senver must be less MAX_AUTH_DATA_SIZE bytes
-                {
-                    struct cross_socket::Buffer send_buff = {nullptr, 0};
-
-                    if(_auth_handler_ptr(recv_buff))
-                    {
-                        //create new connection
-                        uint16_t port = htons(_address.sin_port);
-                        std::string conn_indx = inet_ntoa((&_address)->sin_addr);
-                        conn_indx += ":" + std::to_string(port);
+                uint16_t port = htons(_address.sin_port);
+                std::string conn_indx = inet_ntoa((&_address)->sin_addr);
+                conn_indx += ":" + std::to_string(port);
                     
-                        if(_connections.find(conn_indx) == _connections.end())
-                        {
-                            _connections[conn_indx] = std::make_shared<Connection>(_socket);
-                        }
-
-                        //make new socket and bind it to new port TODO
-                        
-                        //start MainHandler in a new thread TODO
-
-                        //set work ip port
-                        send_buff = {(char*)conn_indx.c_str(), (uint32_t)conn_indx.size()};
-                    }
-
-                    //send data to client
-                    Send(_socket, &send_buff, &_address);
+                if(_connections.find(conn_indx) == _connections.end()) //TODO protection network atacks
+                {
+                    _connections[conn_indx] = std::make_shared<Connection>(_socket);
                 }
+
+                send_buff = _main_handler_ptr(_connections[conn_indx], recv_buff);
+
+                Send(_socket, send_buff, &_address);
             }
+
+            recv_buff = {};
         }
     }
 
     void CrossSocketSrvUDP::MainHandler(std::string index) //separate thread for each client
     {
+        //todo someday
         while (_status != SrvStatuses::STOP)
         {
 
