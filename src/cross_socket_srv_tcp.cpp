@@ -60,6 +60,9 @@ namespace cross_socket
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
+
+        //starting a new thread to destroy connection
+        std::thread(&CrossSocketSrvTCP::DisconnectClient, this, conn_key).detach();
     }
 
     void CrossSocketSrvTCP::DisconnectClient(std::string conn_key)
@@ -73,6 +76,8 @@ namespace cross_socket
         {
             // start accepting connections
             _accept_thread = std::thread(&CrossSocketSrvTCP::AcceptHandler, this);
+            
+            _status = SrvStatuses::STARTED;
         }
     }
 

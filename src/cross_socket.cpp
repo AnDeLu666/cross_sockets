@@ -13,7 +13,10 @@ namespace cross_socket
             _sock_error = SocketError::SOCK_INIT_ERROR;
         }
 
-        SetSockOptTimeout(socket_tmp, 1);
+        if(_socket_type == UDP)
+        {
+            SetSockOptTimeout(socket_tmp, 1); //sometimes socket hungs if do not set timeout
+        }
         
         return socket_tmp;
     }

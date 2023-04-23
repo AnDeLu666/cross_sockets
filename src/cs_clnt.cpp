@@ -6,8 +6,8 @@
 
 int main(int argc, char const* argv[]) 
 {   
-    //cross_socket::CrossSocketClntTCP clnt;
-    cross_socket::CrossSocketClntUDP clnt;
+    cross_socket::CrossSocketClntTCP clnt;
+    //cross_socket::CrossSocketClntUDP clnt;
 
     clnt.Connect("127.0.0.1", 8666);
     //clnt.Connect("192.168.1.64", 8666);

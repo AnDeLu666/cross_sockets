@@ -69,8 +69,8 @@ int main(int argc, char const *argv[])
 
     InitMyProtocolMethods();
 
-    //cross_socket::CrossSocketSrvTCP srv(8666); //create obj srv
-    cross_socket::CrossSocketSrvUDP srv(8666); //create obj srv
+    cross_socket::CrossSocketSrvTCP srv(8666); //create obj srv
+    //cross_socket::CrossSocketSrvUDP srv(8666); //create obj srv
     
     //set functions to deal with clients
     srv.Set_main_handler_ptr(ProtocolHandler);
