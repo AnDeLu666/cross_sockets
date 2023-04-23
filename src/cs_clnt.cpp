@@ -6,7 +6,7 @@
 
 int main(int argc, char const* argv[]) 
 {   
-    
+    //cross_socket::CrossSocketClntTCP clnt;
     cross_socket::CrossSocketClntUDP clnt;
 
     clnt.Connect("127.0.0.1", 8666);
@@ -14,9 +14,10 @@ int main(int argc, char const* argv[])
     //for test we use 
     char in_case = 0;
     
-    std::string tmp_index = "", index = "127.0.0.1:8666";
+    auto it = clnt._cw.ItBegin();
+
+    std::string tmp_conn_key = "", conn_key = "127.0.0.1:8666";
     std::string data = "";
-    auto it = clnt._connections.begin();
 
     while(in_case != '4')
     {
@@ -31,9 +32,9 @@ int main(int argc, char const* argv[])
         {
             case '1':
                 printf("List of connections \n");
-                it = clnt._connections.begin();
+                it = clnt._cw.ItBegin();
         
-                for( ; it != clnt._connections.end(); it++)
+                for( ; it != clnt._cw.ItEnd(); it++)
                 {
                     PRINT_DBG("con %s \n", it->first.c_str());
                 }
@@ -42,36 +43,36 @@ int main(int argc, char const* argv[])
 
             case '2':
                 printf("Enter connection index \n");
-                std::cin >> tmp_index;
-                if(clnt._connections.find(tmp_index) != clnt._connections.end())
+                std::cin >> tmp_conn_key;
+                if(clnt._cw.Find(tmp_conn_key))
                 {
-                    index = tmp_index;
-                    tmp_index = "";
+                    conn_key = tmp_conn_key;
+                    tmp_conn_key = "";
                 }
                 break;
 
             case '3':
                     while(data != "exit")
                     {
-                        if(clnt._connections[index]->Get_send_buffer_ptr() == nullptr)
+                        if(clnt._cw.Find(conn_key)) 
                         {
-                            printf("Send data to server(type 'exit' to return previous menu): \n");
-                            std::cin >>  data;
-
-                            if(clnt._connections.find(index) != clnt._connections.end())
+                            if(clnt._cw.If_send_buffer_is_nullptr(conn_key))
                             {
-                                auto tmp = reinterpret_cast<const cross_socket::byte_t*>(data.c_str());
-                                
-                                cross_socket::Buffer* send_buff = new cross_socket::Buffer{};
-                                send_buff->data.insert(send_buff->data.end(),tmp, tmp + data.size());
+                                printf("Send data to server(type 'exit' to return previous menu): \n");
+                                std::cin >>  data;
 
-                                clnt._connections[index]->Set_send_buffer_ptr(send_buff);
+                                    auto tmp = reinterpret_cast<const cross_socket::byte_t*>(data.c_str());
+                                    
+                                    cross_socket::Buffer* send_buff = new cross_socket::Buffer{};
+                                    send_buff->data.insert(send_buff->data.end(),tmp, tmp + data.size());
+
+                                    clnt._cw.Set_send_buffer_ptr(conn_key, send_buff);
                             }
-                            else
-                            {
-                                PRINT_DBG("connection is not found \n");
-                                break;
-                            }
+                        }
+                        else
+                        {
+                            PRINT_DBG("connection is not found \n");
+                            break;
                         }
                     }
                     
@@ -81,6 +82,8 @@ int main(int argc, char const* argv[])
 
         }
     }
+
+    PRINT_DBG("Bye bye!!!\n");
     
     return 0;
 }

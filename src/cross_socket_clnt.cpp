@@ -2,13 +2,17 @@
 
 namespace cross_socket
 {
-    void CrossSocketClnt::SharedConnectHandler(ConnectionsMap& connections, std::string ip_addr_str, uint16_t port)
+    CrossSocketClnt::CrossSocketClnt(int socket_type, bool init_socket)
+    : CrossSocket(socket_type, init_socket)
+    {}
+
+    void CrossSocketClnt::Connect(std::string ip_addr_str, uint16_t port)
     {
-        std::string index = ip_addr_str + ":" + std::to_string(port);
+        std::string conn_key = ip_addr_str + ":" + std::to_string(port);
         
-        if(connections.find(index) == connections.end())
+        if(!_cw.Find(conn_key))
         {
-            Socket new_socket = GetNewSocket();
+            Socket new_socket = InitNewSocket();
 
             struct sockaddr_in* server_address_ptr = new(struct sockaddr_in);
             server_address_ptr->sin_family = AF_INET; // IPv4
@@ -18,14 +22,42 @@ namespace cross_socket
 
             if(ConnectToSocket(new_socket, *server_address_ptr))
             {   
-                connections[index] = std::make_shared<Connection>(new_socket);
-                connections[index]->Set_address_ptr(server_address_ptr);
-                connections[index]->Set_thread_ptr(std::make_shared<std::thread>(std::thread(&CrossSocketClnt::MainHandler, this, index)));
-                connections[index]->Get_thread_ptr()->detach();
-                connections[index]->Set_status(ConnStatuses::CONNECTED);
+                _cw.AddNewConnection(conn_key, new_socket);
+
+                if(_cw.Find(conn_key))
+                {
+                    _cw.Set_address_ptr(conn_key, server_address_ptr);
+                    _cw.Set_thread_ptr(conn_key, std::make_shared<std::thread>(&CrossSocketClnt::MainHandler, this, conn_key));
+                    _cw.Set_status(conn_key, ConnStatuses::CONNECTED);
+                }
             }
         }
         
+    }
+
+    
+    bool CrossSocketClnt::ConnectToSocket(Socket socket, struct sockaddr_in& address)
+    {
+        bool res = true;
+        
+        if(_socket_type == TCP)
+        {
+            if(connect(socket, (struct sockaddr*)&address, sizeof(address)) < 0)
+            {
+                perror("Connection failed\n");
+                _sock_error = SocketError::CONNECTION_ERROR;
+                res = false;
+            }
+        }
+
+        return res;
+    }
+
+    void CrossSocketClnt::Disconnect(std::string conn_key)
+    {
+        _cw.DeleteConnection(conn_key);
+
+        PRINT_DBG("CrossSocketClntTCP Disconnect \n");
     }
 
     CrossSocketClnt::~CrossSocketClnt()

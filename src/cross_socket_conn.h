@@ -5,6 +5,7 @@ namespace cross_socket
 {  
     enum ConnStatuses
     {
+        UNDEFINED,
         NEW,
         CONNECTED,
         DISCONNECT
@@ -13,6 +14,9 @@ namespace cross_socket
     class Connection
     {
     private:
+        void CloseSocket();
+
+    public:
         ConnStatuses _status = ConnStatuses::NEW;
         std::shared_ptr<std::thread> _thread_ptr = nullptr;
         std::string _session_key = "";
@@ -22,29 +26,9 @@ namespace cross_socket
 
         cross_socket::Buffer* _send_buffer_ptr = nullptr;
 
-        void CloseSocket();
-
-    public:
         Connection(Socket conn_socket);
 
-        void Set_status(ConnStatuses status);
-        ConnStatuses Get_status();
-
-        void Set_thread_ptr(std::shared_ptr<std::thread>);
-        std::shared_ptr<std::thread> Get_thread_ptr();
-
-        void Set_session_key(std::string);
-        std::string Get_session_key();
-
-        void Set_conn_socket(Socket);
-        Socket Get_conn_socket();
-
-        void Set_address_ptr(struct sockaddr_in*);
-        struct sockaddr_in* Get_address_ptr();
-
-        void Set_send_buffer_ptr(cross_socket::Buffer*);
-        cross_socket::Buffer* Get_send_buffer_ptr();
-
+        
         ~Connection();
     };
 

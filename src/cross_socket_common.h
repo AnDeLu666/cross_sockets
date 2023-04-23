@@ -9,6 +9,7 @@
 #include <string>
 #include <functional>
 #include <vector>
+#include <mutex>
 
 //#define _WIN64
 #ifdef _WIN64
@@ -49,11 +50,13 @@ typedef socklen_t Socklen_t;
 #define TCP SOCK_STREAM
 #define UDP SOCK_DGRAM
 
+
 namespace cross_socket
 {
     typedef uint8_t byte_t;
     typedef uint32_t data_size_t;
 
+    const short RECV_SEND_ERR = -1;
     const uint16_t MAX_AUTH_DATA_SIZE = 1024; // in bytes TODO maybe limited receiving
     const uint16_t DEFAULT_BUFFER_SIZE = 1024; // bytes read write to/from network when datasize is unknown
     const data_size_t MAX_RECV_SEND_DATA_SIZE = 4294967295; //bytes
@@ -76,6 +79,7 @@ namespace cross_socket
     {
         std::vector<byte_t> data;
         long long int real_bytes = 0; //received or sent from/to network
+        short s_r_err = 0;
     };
     
 

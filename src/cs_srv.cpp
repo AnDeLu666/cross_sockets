@@ -17,7 +17,7 @@ void InitMyProtocolMethods()
     Methods_s.emplace("send_your_ip_port", m_send_your_ip_port);
 }
 
-cross_socket::Buffer* ProtocolHandler(std::shared_ptr<cross_socket::Connection> conn, cross_socket::Buffer& buff)
+cross_socket::Buffer* ProtocolHandler(cross_socket::ConnectionsWrapper* cw, std::string conn_key, cross_socket::Buffer& buff)
 {
     cross_socket::Buffer* send_buff = new cross_socket::Buffer{};
     
@@ -25,13 +25,14 @@ cross_socket::Buffer* ProtocolHandler(std::shared_ptr<cross_socket::Connection> 
     if(!buff.data.empty())
     {
         //first request to server must be less MAX_AUTH_DATA_SIZE bytes
-        if((conn->Get_session_key() == "" && buff.data.size() <= cross_socket::MAX_AUTH_DATA_SIZE) || conn->Get_session_key() != "")
+        std::string session_key = cw->Get_session_key(conn_key);
+
+        if((session_key == "" && buff.data.size() <= cross_socket::MAX_AUTH_DATA_SIZE) || session_key != "")
         {
 
             buff.data.push_back('\0'); //string have to finish with 0
             std::string key = reinterpret_cast<const char*>(&(buff.data[0]));
 
-            std::string session_key ="";
             const cross_socket::byte_t* tmp_bytes;
 
             auto it = Methods_s.find(key);
@@ -46,7 +47,7 @@ cross_socket::Buffer* ProtocolHandler(std::shared_ptr<cross_socket::Connection> 
                         session_key = "adfdsgsdg2774836422gsgdd_1";
                         tmp_bytes = reinterpret_cast<const cross_socket::byte_t*>(session_key.c_str());
 
-                        conn->Set_session_key(session_key);
+                        cw->Set_session_key(conn_key, session_key);
 
                         send_buff->data.insert(send_buff->data.end(), tmp_bytes, tmp_bytes + session_key.size());
                     break;
@@ -68,16 +69,13 @@ int main(int argc, char const *argv[])
 
     InitMyProtocolMethods();
 
+    //cross_socket::CrossSocketSrvTCP srv(8666); //create obj srv
     cross_socket::CrossSocketSrvUDP srv(8666); //create obj srv
     
     //set functions to deal with clients
     srv.Set_main_handler_ptr(ProtocolHandler);
+    //srv.SetOptions(false);
     srv.Start(); //sart server
-    
-    while(srv._connections.size() < 1)
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
 
 
     while(srv._status != cross_socket::SrvStatuses::STOP)

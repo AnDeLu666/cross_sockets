@@ -16,8 +16,7 @@ class CrossSocketSrvTCP: public CrossSocketSrv, public CrossSocket
 
         void MainHandler(std::string index);
 
-        void Stop();
-
+        void DisconnectClient(std::string conn_key);
         
         ~CrossSocketSrvTCP();
 

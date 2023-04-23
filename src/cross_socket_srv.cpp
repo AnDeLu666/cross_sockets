@@ -27,9 +27,10 @@ namespace cross_socket
         {
             _accept_thread.join();
         }
+        
     }
 
-    void CrossSocketSrv::Set_main_handler_ptr(std::function<Buffer*(std::shared_ptr<Connection>, Buffer&)> func_ptr)
+    void CrossSocketSrv::Set_main_handler_ptr(std::function<Buffer*(cross_socket::ConnectionsWrapper* cw, std::string conn_key, Buffer&)> func_ptr)
     {
         _main_handler_ptr = func_ptr;
     }

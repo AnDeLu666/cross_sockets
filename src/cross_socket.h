@@ -1,35 +1,38 @@
 #pragma once
 
 #include "cross_socket_common.h"
-#include "cross_socket_conn.h"
 
 namespace cross_socket
 {
     class CrossSocket
     {
     protected:
+        struct Options
+        {
+            bool _send_recv_buff_size_first = true;
+            short _sock_opt = 1;
+        };
+
+        Options _opt;
+
         int _socket_type = TCP;
 
         Socket _socket = -20;
         
         SocketError _sock_error = EMPTY;
 
-        const int _opt = 1;
-
         Socket InitNewSocket();
+        void SetSockOptTimeout(Socket socket, short timeout_in_seconds);
 
     public:
-        ConnectionsMap _connections;  
-
         CrossSocket(int socket_type, bool init_socket);
+
+        void SetOptions(bool send_recv_buff_size_first);
         
         SocketError GetSockError();
 
         cross_socket::Buffer& Recv(Socket recv_sock, sockaddr_in* address);
-        cross_socket::Buffer& Recv(Socket recv_sock, sockaddr_in* address, bool buff_size_first);
-
         int Send(Socket send_sock, Buffer* buff, sockaddr_in* address);
-        int Send(Socket send_sock, Buffer* buff, sockaddr_in* address, bool buff_size_first);
 
         ~CrossSocket();
     };

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cross_socket.h"
+#include "cross_socket_conn_wrapper.h"
 
 namespace cross_socket
 {
@@ -18,7 +19,7 @@ namespace cross_socket
     {
         protected:
             std::thread _accept_thread;
-            std::function<Buffer*(std::shared_ptr<Connection>, Buffer&)> _main_handler_ptr = nullptr;
+            std::function<Buffer*(cross_socket::ConnectionsWrapper* cw, std::string conn_key, Buffer&)> _main_handler_ptr = nullptr;
 
             struct sockaddr_in _address;
             uint16_t _port;
@@ -29,14 +30,17 @@ namespace cross_socket
             virtual void MainHandler(std::string index) = 0;
 
         public:
+            ConnectionsWrapper _cw;  // connections wrapper  
+            
             SrvStatuses::SrvStatus _status = SrvStatuses::NEW;
             
             CrossSocketSrv(uint16_t port);
 
             bool Start();
+            
             void Stop();
 
-            void Set_main_handler_ptr(std::function<Buffer*(std::shared_ptr<Connection>, Buffer&)> func_ptr);
+            void Set_main_handler_ptr(std::function<Buffer*(cross_socket::ConnectionsWrapper* cw, std::string conn_key, Buffer&)> func_ptr);
 
             ~CrossSocketSrv();
     };
