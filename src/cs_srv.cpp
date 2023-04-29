@@ -30,7 +30,7 @@ cross_socket::Buffer* ProtocolHandler(cross_socket::ConnectionsWrapper* cw, std:
         if((session_key == "" && buff.data.size() <= cross_socket::MAX_AUTH_DATA_SIZE) || session_key != "")
         {
 
-            buff.data.push_back('\0'); //string have to finish with 0
+            buff.data.emplace_back(0); //string have to finish with 0
             std::string key = reinterpret_cast<const char*>(&(buff.data[0]));
 
             const cross_socket::byte_t* tmp_bytes;
@@ -53,7 +53,7 @@ cross_socket::Buffer* ProtocolHandler(cross_socket::ConnectionsWrapper* cw, std:
                     break;
 
                     default:
-                        send_buff->data.push_back(0);
+                        send_buff->data.emplace_back(0);
                     break;
                 }
             }
@@ -69,12 +69,11 @@ int main(int argc, char const *argv[])
 
     InitMyProtocolMethods();
 
-    cross_socket::CrossSocketSrvTCP srv(8666); //create obj srv
-    //cross_socket::CrossSocketSrvUDP srv(8666); //create obj srv
+    //cross_socket::CrossSocketSrvTCP srv(8666); //create obj srv
+    cross_socket::CrossSocketSrvUDP srv(8666); //create obj srv
     
     //set functions to deal with clients
     srv.Set_main_handler_ptr(ProtocolHandler);
-    //srv.SetOptions(false);
     srv.Start(); //sart server
 
 

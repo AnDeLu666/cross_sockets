@@ -13,25 +13,21 @@ namespace cross_socket
 
     class Connection
     {
-    private:
-        void CloseSocket();
 
     public:
         ConnStatuses _status = ConnStatuses::NEW;
-        std::shared_ptr<std::thread> _thread_ptr = nullptr;
         std::string _session_key = "";
 
         Socket _conn_socket;
-        struct sockaddr_in* _address_ptr = nullptr; 
+        sockaddr_in _address{}; 
 
         cross_socket::Buffer* _send_buffer_ptr = nullptr;
-
         Connection(Socket conn_socket);
 
-        
+        void CloseSocket();
         ~Connection();
     };
 
-    typedef std::map<std::string, std::shared_ptr<cross_socket::Connection>> ConnectionsMap;
+    typedef std::map<std::string, std::unique_ptr<cross_socket::Connection>> ConnectionsMap;
 
 }//end namespace cross_socket

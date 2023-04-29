@@ -11,7 +11,7 @@ CFLAGS = -Wall -g
 CC = g++
 
 CC_mingw = /usr/bin/x86_64-w64-mingw32-g++-posix
-LINKED_LIBS = -static -lwsock32
+LINKED_LIBS = -static -lws2_32
 #-libgcc -static-libstdc++ -lwsock32
 
 
@@ -22,6 +22,8 @@ INCL_LIBS = $(OBJ_DIR)cross_socket.o $(OBJ_DIR)cross_socket_common.o $(OBJ_DIR)c
 INCL_CLNT = $(OBJ_DIR)cross_socket_clnt.o $(OBJ_DIR)cross_socket_clnt_udp.o $(OBJ_DIR)cross_socket_clnt_tcp.o
 INCL_SRV = $(OBJ_DIR)cross_socket_srv.o $(OBJ_DIR)cross_socket_srv_tcp.o $(OBJ_DIR)cross_socket_srv_udp.o
 LIB_HEADERS_DIR = ./cross_socket_lib_h/
+LIB_HEADERS_DIR_PROXY = ../proxy/cross_socket_lib_w_h/
+LIB_HEADERS_L_DIR_PROXY = ../proxy/cross_socket_lib_h/
 
 OBJ_DIR_WIN = ./obj_windows/
 BIN_DIR_WIN = ./build_windows/
@@ -65,6 +67,10 @@ if_folders_not_exist :
 		then mkdir $(LIB_HEADERS_DIR); \
 	fi
 
+
+	if [ ! -d "$(LIB_HEADERS_DIR_PROXY)" ]; \
+		then mkdir $(LIB_HEADERS_DIR_PROXY); \
+	fi
 		
 $(OBJ) : $(OBJ_DIR)%.o : $(SRC_DIR)%.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -99,3 +105,9 @@ $(BIN_DIR_WIN)$(TARGET22) : $(OBJ_WIN)
 nix_lib_all : $(OBJ)
 		ar rvs $(LIB_HEADERS_DIR)lib_cross_socket1.a $(INCL_LIBS) $(INCL_SRV) $(INCL_CLNT) 
 		cp -r $(HEADERS) $(LIB_HEADERS_DIR)
+		cp -r $(HEADERS) $(LIB_HEADERS_L_DIR_PROXY)
+		cp -r $(LIB_HEADERS_DIR)lib_cross_socket1.a $(LIB_HEADERS_L_DIR_PROXY)
+
+win_lib_all : $(OBJ_WIN)
+		ar rvs $(LIB_HEADERS_DIR_PROXY)lib_cross_socket_w1.a $(INCL_LIBS_WIN) $(INCL_SRV_WIN) $(INCL_CLNT_WIN) 
+		cp -r $(HEADERS) $(LIB_HEADERS_DIR_PROXY)

@@ -20,6 +20,8 @@ namespace cross_socket
             virtual void MainHandler(std::string index) = 0; 
 
             virtual void Connect(std::string ip_addr_str, uint16_t port);
+            virtual void Connect(std::string ip_addr_str, uint16_t port, std::string suffix_of_conn_key);
+            virtual bool Reconnect(std::string conn_key);
 
             virtual void Disconnect(std::string conn_key);
 

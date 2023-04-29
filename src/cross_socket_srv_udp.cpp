@@ -13,7 +13,7 @@ namespace cross_socket
         _srv_addr.sin_family = AF_INET; // IPv4
         _srv_addr.sin_addr.s_addr = INADDR_ANY;
 
-        if ((_sock_error = cross_socket::Server_Bind(_socket, _port, _srv_addr)) == SocketError::EMPTY)
+        if ((_sock_error = cross_socket::Server_Bind(_socket, _port, _srv_addr)) == SocketError::NO_ERRORS)
         {           
             _accept_thread = std::thread(&CrossSocketSrvUDP::AcceptHandler, this);
 
@@ -24,31 +24,38 @@ namespace cross_socket
 
     void CrossSocketSrvUDP::AcceptHandler()
     {
-        cross_socket::Buffer recv_buff{};
+        cross_socket::Buffer* recv_buff;
         cross_socket::Buffer* send_buff;
 
         while (_status != SrvStatuses::STOP)
         {
-            recv_buff = Recv(_socket, &_address);
-            if (recv_buff.real_bytes <= 0)
+            recv_buff = Recv(_socket, _address);
+            if (GetSockoptError(_socket) != SocketError::NO_ERRORS)
             {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                break;
             }
-            else
+            if (recv_buff->real_bytes > 0)
             {
                 uint16_t port = htons(_address.sin_port);
                 std::string conn_key = inet_ntoa((&_address)->sin_addr);
                 conn_key += ":" + std::to_string(port);
+
+                Socket conn_socket = _socket; //TODO get separate port and socket in a new thread
                     
                 if(!_cw.Find(conn_key)) //TODO protection network atacks
                 {
-                    _cw.AddNewConnection(conn_key, _socket);
+                    _cw.AddNewConnection(conn_key, conn_socket);
                 }
 
-                send_buff = _main_handler_ptr(&_cw, conn_key, recv_buff);
+                send_buff = _main_handler_ptr(&_cw, conn_key, *recv_buff);
 
-                Send(_socket, send_buff, &_address);
+                if(Send(_cw.Get_conn_socket(conn_key), *send_buff, _address) <= 0)
+                {
+                    _cw.Set_status(conn_key, ConnStatuses::DISCONNECT);
+                }
             }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
             recv_buff = {};
         }

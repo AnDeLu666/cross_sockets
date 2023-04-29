@@ -4,7 +4,10 @@ namespace cross_socket
 {
     void ConnectionsWrapper::AddNewConnection(std::string conn_key, Socket conn_socket)
     {
-        _connections[conn_key] = std::make_shared<Connection>(conn_socket);
+        _conn_mtx.lock();
+        _connections[conn_key] = std::move(std::make_unique<Connection>(conn_socket));
+        _conn_mtx.unlock();
+        
     }
 
     bool ConnectionsWrapper::Find(std::string conn_key)
@@ -22,6 +25,11 @@ namespace cross_socket
         return _connections.end();
     }
 
+    // ConnectionsMap::iterator ConnectionsWrapper::ItConn(std::string conn_key)
+    // {
+    //     return _connections.find(conn_key);
+    // }
+
     bool ConnectionsWrapper::ConnIteratorIsValid(ConnectionsMap::iterator conn_it)
     {
     return (conn_it != _connections.end()) ? true : false;
@@ -29,7 +37,10 @@ namespace cross_socket
     
     void ConnectionsWrapper::Set_status(std::string conn_key, ConnStatuses status)
     {
-        ConnSetter<ConnStatuses>(conn_key, status, [](ConnStatuses status, ConnectionsMap::iterator conn_it){conn_it->second->_status = status;});
+        ConnSetter<ConnStatuses>(conn_key, status, [](ConnStatuses status, ConnectionsMap::iterator conn_it)
+        {
+            conn_it->second->_status = status;
+        });
     }
 
     ConnStatuses ConnectionsWrapper::Get_status(std::string conn_key)
@@ -40,17 +51,17 @@ namespace cross_socket
         });
     }
     
-    void ConnectionsWrapper::Set_thread_ptr(std::string conn_key, std::shared_ptr<std::thread> thread_ptr)
-    {
-        ConnSetter<std::shared_ptr<std::thread>>(conn_key, thread_ptr, 
-            [](std::shared_ptr<std::thread> thread_ptr, ConnectionsMap::iterator conn_it)
-            {        
-                if (conn_it->second->_thread_ptr == nullptr) //we can set it only one time
-                {
-                    conn_it->second->_thread_ptr = thread_ptr;
-                }
-            });
-    }
+    // void ConnectionsWrapper::Set_thread_ptr(std::string conn_key, std::shared_ptr<std::thread> thread_ptr)
+    // {
+    //     ConnSetter<std::shared_ptr<std::thread>>(conn_key, thread_ptr, 
+    //         [](std::shared_ptr<std::thread> thread_ptr, ConnectionsMap::iterator conn_it)
+    //         {        
+    //             if (conn_it->second->_thread_ptr == nullptr) //we can set it only one time
+    //             {
+    //                 conn_it->second->_thread_ptr = thread_ptr;
+    //             }
+    //         });
+    // }
 
     void ConnectionsWrapper::Set_session_key(std::string conn_key, std::string session_key)
     {
@@ -68,11 +79,11 @@ namespace cross_socket
         });
     }
 
-    void ConnectionsWrapper::Set_conn_socket(std::string conn_key, Socket socket)
+    void ConnectionsWrapper::Set_conn_socket(std::string conn_key, Socket conn_socket)
     {
-        ConnSetter<Socket>(conn_key, socket, [](Socket socket, ConnectionsMap::iterator conn_it)
+        ConnSetter<Socket>(conn_key, conn_socket, [](Socket conn_socket, ConnectionsMap::iterator conn_it)
         {
-            conn_it->second->_conn_socket = socket;
+            conn_it->second->_conn_socket = conn_socket;
         });
     }
 
@@ -84,37 +95,61 @@ namespace cross_socket
         });
     }
 
-    void ConnectionsWrapper::Set_address_ptr(std::string conn_key, sockaddr_in* address_ptr)
-    {
-        ConnSetter<sockaddr_in*>(conn_key, address_ptr, [](sockaddr_in* address_ptr, ConnectionsMap::iterator conn_it)
+    void ConnectionsWrapper::CloseCurSocket(std::string conn_key)
+    {   
+        _conn_mtx.lock();
+        auto conn_it = _connections.find(conn_key);
+        
+        if(ConnIteratorIsValid(conn_it))
         {
-            conn_it->second->_address_ptr = address_ptr;;
+            conn_it->second->CloseSocket();
+        }
+        _conn_mtx.unlock(); 
+    }
+
+    void ConnectionsWrapper::Set_address_ref(std::string conn_key, sockaddr_in& address_ptr)
+    {
+        ConnSetter<sockaddr_in&>(conn_key, address_ptr, [](sockaddr_in& address, ConnectionsMap::iterator conn_it)
+        {
+            conn_it->second->_address = address;
         });
     }
 
-    sockaddr_in* ConnectionsWrapper::Get_address_ptr(std::string conn_key)
-    {
-        return ConnGetter<sockaddr_in*>(conn_key, nullptr, [](ConnectionsMap::iterator conn_it)
+    sockaddr_in& ConnectionsWrapper::Get_address_ref(std::string conn_key)
+    {   
+        auto address = ConnGetter<sockaddr_in*>(conn_key, new sockaddr_in{}, [](ConnectionsMap::iterator conn_it)
         {
-            return conn_it->second->_address_ptr;
+            return &conn_it->second->_address;
         });
+
+        return *address;
     }
 
     void ConnectionsWrapper::Set_send_buffer_ptr(std::string conn_key, cross_socket::Buffer* buff_ptr)
     {
         ConnSetter<cross_socket::Buffer*>(conn_key, buff_ptr, [](cross_socket::Buffer* buff_ptr, ConnectionsMap::iterator conn_it)
         {
-            conn_it->second->_send_buffer_ptr = buff_ptr;;
+            if(buff_ptr == nullptr)
+            {
+                delete conn_it->second->_send_buffer_ptr;
+            }
+            conn_it->second->_send_buffer_ptr = buff_ptr;
         });
     }
 
-    cross_socket::Buffer* ConnectionsWrapper::Get_send_buffer_ptr(std::string conn_key)
-    {
-        
-        return ConnGetter<cross_socket::Buffer*>(conn_key, nullptr, [](ConnectionsMap::iterator conn_it)
+    cross_socket::Buffer& ConnectionsWrapper::Get_send_buffer_ref(std::string conn_key)
+    { 
+        auto buff = ConnGetter<cross_socket::Buffer*>(conn_key, nullptr, [](ConnectionsMap::iterator conn_it)
         {
             return conn_it->second->_send_buffer_ptr;
         });
+
+        if (buff == nullptr) 
+        {
+            buff = new cross_socket::Buffer{};
+        }
+        
+        return *buff;
     }
 
     bool ConnectionsWrapper::If_send_buffer_is_nullptr(std::string conn_key)
@@ -126,16 +161,21 @@ namespace cross_socket
         });
     }
 
-     void ConnectionsWrapper::DeleteConnection(std::string conn_key)
-     {
-
-        conn_mtx.lock();
-
+    void ConnectionsWrapper::DeleteConnection(std::string conn_key)
+    {
+        _conn_mtx.lock();
+        PRINT_DBG("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Del conn start erase conn %s\n", conn_key.c_str());
         _connections.erase(conn_key);
+       
+        auto it = _connections.begin();
+        for(; it != _connections.end(); it++)
+        {
 
-        conn_mtx.unlock(); 
-     }
+            PRINT_DBG("conn %s \n", it->first.c_str());
+        }
 
+        _conn_mtx.unlock(); 
+    }
 
     ConnectionsWrapper::~ConnectionsWrapper()
     {

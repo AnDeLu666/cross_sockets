@@ -16,12 +16,13 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 // #pragma comment(lib, "WS2_32.lib") //under linux make mingw it wont work
-// we have to add -lwsock32 to command-line in makefile instead of
+// we have to add -lws2_32 to command-line in makefile instead of
 // #pragma when compiling with MinGW
 #else
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <unistd.h>
 #endif
 
@@ -47,24 +48,25 @@ typedef socklen_t Socklen_t;
 #define PRINT_DBG(exp, ...)
 #endif
 
-#define TCP SOCK_STREAM
-#define UDP SOCK_DGRAM
-
 
 namespace cross_socket
 {
     typedef uint8_t byte_t;
     typedef uint32_t data_size_t;
+    typedef long long int My_ssize_t; 
 
-    const short RECV_SEND_ERR = -1;
+    const short TCP = SOCK_STREAM;
+    const short UDP = SOCK_DGRAM;
+
     const uint16_t MAX_AUTH_DATA_SIZE = 1024; // in bytes TODO maybe limited receiving
     const uint16_t DEFAULT_BUFFER_SIZE = 1024; // bytes read write to/from network when datasize is unknown
-    const data_size_t MAX_RECV_SEND_DATA_SIZE = 4294967295; //bytes
+    const data_size_t MAX_RECV_SEND_DATA_SIZE = 4294967295; //bytes //MAX_RECV_SEND_DATA_SIZE must  be related to data_size_t
+    const short DEFAULT_SOCKET_TIMEOUT = 1; //udp sockets use it
 
-    enum SocketError
+    enum SocketError //todo make with real codes
     {
-        EMPTY,
-        CONNECTION_ERROR,
+        NO_ERRORS,
+        CONNECTION_ERROR, //WSAECONNREFUSED linux - ECONNREFUSED
         INVALID_IP_ERROR,
         SOCK_ACCEPT_ERROR,
         SOCK_BIND_ERROR,
@@ -78,13 +80,24 @@ namespace cross_socket
     struct Buffer
     {
         std::vector<byte_t> data;
-        long long int real_bytes = 0; //received or sent from/to network
-        short s_r_err = 0;
+        My_ssize_t real_bytes = 0; //received or sent from/to network ssize_t in win and linux are different
+
+        My_ssize_t data_size()
+        {
+            My_ssize_t value = data.size();
+            return value;
+        }
     };
     
 
-    SocketError Server_InitTCP(Socket socket, uint16_t port, int opt, struct sockaddr_in &address);
+    bool SetSockoptTCPKeepAlive(Socket conn_socket, int opt);
+    void SetWIN_TCPNonBlockingTCPSocket(Socket socket);
+    int GetSockoptError(Socket socket);
+
+    SocketError Server_InitTCP(Socket socket, uint16_t port, struct sockaddr_in &address);
     SocketError Server_Bind(Socket socket, uint16_t port, sockaddr_in &address);
+
+    
 
 } // end namespace cross_socket
 

@@ -6,8 +6,8 @@
 
 int main(int argc, char const* argv[]) 
 {   
-    cross_socket::CrossSocketClntTCP clnt;
-    //cross_socket::CrossSocketClntUDP clnt;
+    //cross_socket::CrossSocketClntTCP clnt;
+    cross_socket::CrossSocketClntUDP clnt;
 
     clnt.Connect("127.0.0.1", 8666);
     //clnt.Connect("192.168.1.64", 8666);
@@ -61,12 +61,12 @@ int main(int argc, char const* argv[])
                                 printf("Send data to server(type 'exit' to return previous menu): \n");
                                 std::cin >>  data;
 
-                                    auto tmp = reinterpret_cast<const cross_socket::byte_t*>(data.c_str());
-                                    
-                                    cross_socket::Buffer* send_buff = new cross_socket::Buffer{};
-                                    send_buff->data.insert(send_buff->data.end(),tmp, tmp + data.size());
+                                auto tmp = reinterpret_cast<const cross_socket::byte_t*>(data.c_str());
+                                
+                                cross_socket::Buffer* send_buff = new cross_socket::Buffer{};
+                                send_buff->data.insert(send_buff->data.end(),tmp, tmp + data.size());
 
-                                    clnt._cw.Set_send_buffer_ptr(conn_key, send_buff);
+                                clnt._cw.Set_send_buffer_ptr(conn_key, send_buff);
                             }
                         }
                         else

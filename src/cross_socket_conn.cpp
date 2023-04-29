@@ -23,11 +23,6 @@ namespace cross_socket
     Connection::~Connection()
     {
         _status = ConnStatuses::DISCONNECT;
-        
-        if(_thread_ptr->joinable())
-        {
-            _thread_ptr->join();
-        }
 
         CloseSocket();
 
