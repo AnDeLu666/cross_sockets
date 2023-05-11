@@ -7,10 +7,11 @@ namespace cross_socket
 {
     class CrossSocketClntTCP : public CrossSocketClnt
     {
+        private:
+            void SendHandler(std::string conn_key); 
+
         public:
             CrossSocketClntTCP();
-
-            void MainHandler(std::string index); 
 
             ~CrossSocketClntTCP();
     };

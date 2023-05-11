@@ -66,6 +66,9 @@ namespace cross_socket
 
         void Set_session_key(std::string conn_key, std::string session_key);
         std::string Get_session_key(std::string conn_key);
+        
+        void Set_bound_conn_key(std::string conn_key, std::string bound_conn_key);
+        std::string Get_bound_conn_key(std::string conn_key);
 
         void Set_conn_socket(std::string conn_key, Socket conn_socket);
         Socket Get_conn_socket(std::string conn_key);

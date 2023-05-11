@@ -6,7 +6,13 @@ TARGET12 = cs_clnt
 TARGET21 = cs_srv.exe
 TARGET22 = cs_clnt.exe
 
-CFLAGS = -Wall -g
+#debug
+#CFLAGS = -Wall -g
+
+#release
+CFLAGS = -O3 -DNDEBUG
+
+
 
 CC = g++
 
@@ -22,8 +28,8 @@ INCL_LIBS = $(OBJ_DIR)cross_socket.o $(OBJ_DIR)cross_socket_common.o $(OBJ_DIR)c
 INCL_CLNT = $(OBJ_DIR)cross_socket_clnt.o $(OBJ_DIR)cross_socket_clnt_udp.o $(OBJ_DIR)cross_socket_clnt_tcp.o
 INCL_SRV = $(OBJ_DIR)cross_socket_srv.o $(OBJ_DIR)cross_socket_srv_tcp.o $(OBJ_DIR)cross_socket_srv_udp.o
 LIB_HEADERS_DIR = ./cross_socket_lib_h/
-LIB_HEADERS_DIR_PROXY = ../proxy/cross_socket_lib_w_h/
-LIB_HEADERS_L_DIR_PROXY = ../proxy/cross_socket_lib_h/
+LIB_HEADERS_DIR_PROXY = ../rendezvous/cross_socket_lib_w_h/
+LIB_HEADERS_L_DIR_PROXY = ../rendezvous/cross_socket_lib_h/
 
 OBJ_DIR_WIN = ./obj_windows/
 BIN_DIR_WIN = ./build_windows/
@@ -44,7 +50,7 @@ all : if_folders_not_exist $(OBJ) $(BIN)
 win : if_folders_not_exist $(OBJ_WIN) $(BIN_WIN) 
 
 clean :
-	rm -rf $(BIN_DIR)*  $(OBJ_DIR)*.o $(BIN_DIR_WIN)*  $(OBJ_DIR_WIN)*.o $(LIB_HEADERS_DIR)*
+	rm -rf $(BIN_DIR)*  $(OBJ_DIR)*.o $(BIN_DIR_WIN)*  $(OBJ_DIR_WIN)*.o $(LIB_HEADERS_DIR)* 
 
 if_folders_not_exist :
 	if [ ! -d "$(OBJ_DIR)" ]; \

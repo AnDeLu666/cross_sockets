@@ -21,11 +21,10 @@ namespace cross_socket
         }
         else
         {
-            uint16_t port = htons(_address.sin_port);
-            std::string conn_key = inet_ntoa((&_address)->sin_addr);
-            conn_key += ":" + std::to_string(port);
+            auto conn_key = GetIP_PortStringFromAddress(_address);
 
-            if(!SetSockoptTCPKeepAlive(conn_socket, 1))
+            //todo check is it really neccessary
+            if(!SetSockoptTCPKeepAlive(conn_socket, 1)) //1 turn on 0 turn off
             {
                 perror("SOCK_SETOPT_ERROR");
                 _sock_error = SocketError::SOCK_SETOPT_ERROR;
@@ -33,27 +32,32 @@ namespace cross_socket
 
             SetWIN_TCPNonBlockingTCPSocket(conn_socket);//under linux it sets in recv send
 
-            _cw.AddNewConnection(conn_key, conn_socket);
+            PRINT_DBG("here");
 
-            if(_cw.Find(conn_key))
+            if(!_cw.Find(conn_key))
             {
-                //_cw.Set_address_ptr(conn_key, server_address_ptr);
+                _cw.AddNewConnection(conn_key, conn_socket);
+
+                sockaddr_in address{_address};
+                _cw.Set_address_ref(conn_key, address);
                 _cw.Set_status(conn_key, ConnStatuses::CONNECTED);
-                std::thread(&CrossSocketSrvTCP::MainHandler, this, conn_key).detach();
+                std::thread(&CrossSocketSrvTCP::ReceiveHandler, this, conn_key).detach();
             }
 
             AcceptHandler();
         }
     }
 
-    void CrossSocketSrvTCP::MainHandler(std::string conn_key) //separate thread for each client
+    void CrossSocketSrvTCP::ReceiveHandler(std::string conn_key) //separate thread for each client
     {   
-        const short sleep_time_limit = 10;
+        const short sleep_time_limit = 100;
         short sleep_time = 1; //milliseconds it increases if not receive anything up to 
+
+        //int timer = 0;
 
         while (_cw.Get_status(conn_key) == ConnStatuses::CONNECTED)
         {
-            auto recv_buff = Recv(_cw.Get_conn_socket(conn_key), _address);
+            auto recv_buff = Recv(_cw.Get_conn_socket(conn_key));
 
             if (GetSockoptError(_cw.Get_conn_socket(conn_key)) != SocketError::NO_ERRORS)
             {
@@ -62,25 +66,58 @@ namespace cross_socket
             else if(recv_buff->real_bytes > 0)
             {
                 sleep_time = 1;
-
-                auto send_buff = _main_handler_ptr(&_cw, conn_key, *recv_buff);
-
-                if(Send(_cw.Get_conn_socket(conn_key), *send_buff, _address) <= 0)
+                if(_received_data_handler != nullptr)
                 {
-                    _cw.Set_status(conn_key, ConnStatuses::DISCONNECT);
+                    SendHandler(conn_key, recv_buff);
                 }
             }
-            
-            delete recv_buff;
+            else
+            {       
+                delete recv_buff;
+            }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
-
             sleep_time = (sleep_time < sleep_time_limit) ? sleep_time + 1 : sleep_time_limit;
+
+            // if(timer == 5000)
+            // {
+            //     timer = 0;
+            //     PRINT_DBG("GET Hungs!!!!Timeout is reached conn : %s\n", conn_key.c_str());
+            //     _cw.Set_status(conn_key, ConnStatuses::DISCONNECT);
+            //     // Buffer *buff = new cross_socket::Buffer{};
+            //     // if(Send(_cw.Get_conn_socket(conn_key), *buff) <= 0)
+            //     // {
+            //     //     PRINT_DBG("GET Hungs!!!!DISCONNECT \n");
+            //     //     _cw.Set_status(conn_key, ConnStatuses::DISCONNECT);
+            //     // }
+            // }
+
+            // timer++;    
         }
 
         //starting a new thread to destroy connection
         std::thread(&CrossSocketSrvTCP::DisconnectClient, this, conn_key).detach();
     }
+
+    void CrossSocketSrvTCP::SendHandler(std::string conn_key, Buffer* recv_buff) //separate thread for each client
+    {   
+        PRINT_DBG("GET into handler TCP server conn : %s\n", conn_key.c_str());
+        auto send_buff = (_received_data_handler != nullptr)? _received_data_handler(&_cw, conn_key, recv_buff) : nullptr;
+
+        if(_send_data && send_buff != nullptr)
+        {
+            if(Send(_cw.Get_conn_socket(conn_key), send_buff) <= 0)
+            {
+                _cw.Set_status(conn_key, ConnStatuses::DISCONNECT);
+            }
+        }
+
+        PRINT_DBG("GET OUT handler TCP server conn : %s\n", conn_key.c_str());
+
+        delete recv_buff;
+
+    }
+
 
     void CrossSocketSrvTCP::DisconnectClient(std::string conn_key)
     {

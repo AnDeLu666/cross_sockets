@@ -132,12 +132,20 @@ namespace cross_socket
         return error;
     }
 
+    std::string GetIP_PortStringFromAddress(sockaddr_in& address)//return ip_addr:port string
+    {
+        uint16_t port = htons(address.sin_port);
+        std::string conn_key = inet_ntoa(address.sin_addr);
+        conn_key += ":" + std::to_string(port);
+        
+        return conn_key;
+    }
+
     SocketError Server_InitTCP(Socket socket, uint16_t port, struct sockaddr_in& address)
     {
         SocketError error_ = SocketError::NO_ERRORS;
-        int flag = 1;
 
-        if(!SetSockoptTCPKeepAlive(socket, flag))
+        if(!SetSockoptTCPKeepAlive(socket, 1)) //1 turn on 0 turn off
         {
             perror("SOCK_SETOPT_ERROR");
             return  SocketError::SOCK_SETOPT_ERROR;

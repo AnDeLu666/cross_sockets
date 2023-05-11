@@ -10,12 +10,11 @@ namespace cross_socket
             struct sockaddr_in _srv_addr;
 
             void Start_();
-            void AcceptHandler();
+            void AcceptHandler();//now receive handler is implemented inside AcceptHandler
+            void SendHandler(std::string conn_key, Buffer* recv_buff);
         
         public:
             CrossSocketSrvUDP(uint16_t port);
-
-            void MainHandler(std::string index);
 
             void Stop()
             {};

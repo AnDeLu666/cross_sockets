@@ -6,17 +6,17 @@
 
 int main(int argc, char const* argv[]) 
 {   
-    //cross_socket::CrossSocketClntTCP clnt;
-    cross_socket::CrossSocketClntUDP clnt;
+    cross_socket::CrossSocketClntTCP clnt;
+    //cross_socket::CrossSocketClntUDP clnt;
 
-    clnt.Connect("127.0.0.1", 8666);
+    std::string conn_key = clnt.Connect("127.0.0.1", 8666);
     //clnt.Connect("192.168.1.64", 8666);
     //for test we use 
     char in_case = 0;
     
     auto it = clnt._cw.ItBegin();
 
-    std::string tmp_conn_key = "", conn_key = "127.0.0.1:8666";
+    std::string tmp_conn_key = "";
     std::string data = "";
 
     while(in_case != '4')

@@ -17,6 +17,13 @@ namespace cross_socket
     public:
         ConnStatuses _status = ConnStatuses::NEW;
         std::string _session_key = "";
+        
+        //in a common way it wont use and set if we want to implement proxy for exmpl
+        //developer have to manually call send in in function which pass to client/srv
+        // object with method Set_received_data_handler(your function with send call) and 
+        //disable default send calls by setting it with method of client/srv object Set_default_send_data_mode(false)
+        //todo close _bound_conn_key when close current  ?????
+        std::string _bound_conn_key = ""; 
 
         Socket _conn_socket;
         sockaddr_in _address{}; 

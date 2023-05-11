@@ -6,10 +6,12 @@ namespace cross_socket
 {
     class CrossSocketClntUDP : public CrossSocketClnt
     {
+        private:
+
+            void SendHandler(std::string conn_key); 
+
         public:
             CrossSocketClntUDP();
-
-            void MainHandler(std::string index); 
 
             ~CrossSocketClntUDP();
     };

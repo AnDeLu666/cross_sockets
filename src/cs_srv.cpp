@@ -11,27 +11,27 @@ enum Methods_i //if you change names here change it everywhere
 
 std::map<std::string, Methods_i> Methods_s;
     
-void InitMyProtocolMethods()
+void InitMyAPIMethods()
 {
     Methods_s.emplace("auth", m_auth);
     Methods_s.emplace("send_your_ip_port", m_send_your_ip_port);
 }
 
-cross_socket::Buffer* ProtocolHandler(cross_socket::ConnectionsWrapper* cw, std::string conn_key, cross_socket::Buffer& buff)
+cross_socket::Buffer* RecvievedDataHandler(cross_socket::ConnectionsWrapper* cw, std::string conn_key, cross_socket::Buffer* buff)
 {
     cross_socket::Buffer* send_buff = new cross_socket::Buffer{};
     
     
-    if(!buff.data.empty())
+    if(!buff->data.empty())
     {
         //first request to server must be less MAX_AUTH_DATA_SIZE bytes
         std::string session_key = cw->Get_session_key(conn_key);
 
-        if((session_key == "" && buff.data.size() <= cross_socket::MAX_AUTH_DATA_SIZE) || session_key != "")
+        if((session_key == "" && buff->data.size() <= cross_socket::MAX_AUTH_DATA_SIZE) || session_key != "")
         {
 
-            buff.data.emplace_back(0); //string have to finish with 0
-            std::string key = reinterpret_cast<const char*>(&(buff.data[0]));
+            buff->data.emplace_back(0); //string have to finish with 0
+            std::string key = reinterpret_cast<const char*>(&(buff->data[0]));
 
             const cross_socket::byte_t* tmp_bytes;
 
@@ -42,7 +42,7 @@ cross_socket::Buffer* ProtocolHandler(cross_socket::ConnectionsWrapper* cw, std:
                 switch (it->second)
                 {
                     case m_auth:
-                        PRINT_DBG("ProtocolHandler received auth req : %s \n", key.c_str());
+                        PRINT_DBG("RecvievedDataHandler received auth req : %s \n", key.c_str());
                         //TODO generate key
                         session_key = "adfdsgsdg2774836422gsgdd_1";
                         tmp_bytes = reinterpret_cast<const cross_socket::byte_t*>(session_key.c_str());
@@ -67,14 +67,14 @@ cross_socket::Buffer* ProtocolHandler(cross_socket::ConnectionsWrapper* cw, std:
 int main(int argc, char const *argv[])
 {
 
-    InitMyProtocolMethods();
+    InitMyAPIMethods();
 
-    //cross_socket::CrossSocketSrvTCP srv(8666); //create obj srv
-    cross_socket::CrossSocketSrvUDP srv(8666); //create obj srv
+    cross_socket::CrossSocketSrvTCP srv(8666); //create obj srv
+    //cross_socket::CrossSocketSrvUDP srv(8666); //create obj srv
     
     //set functions to deal with clients
-    srv.Set_main_handler_ptr(ProtocolHandler);
-    srv.Start(); //sart server
+    srv.Set_received_data_handler(RecvievedDataHandler);
+    srv.Start(); //start server
 
 
     while(srv._status != cross_socket::SrvStatuses::STOP)

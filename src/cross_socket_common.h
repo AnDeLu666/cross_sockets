@@ -44,8 +44,10 @@ typedef socklen_t Socklen_t;
 #define DEBUG
 #ifdef DEBUG
 #define PRINT_DBG(exp, ...) printf((exp), ##__VA_ARGS__)
+#define ADD_DBG_CODE(exp) exp
 #else
 #define PRINT_DBG(exp, ...)
+#define ADD_DBG_CODE(exp)
 #endif
 
 
@@ -59,9 +61,10 @@ namespace cross_socket
     const short UDP = SOCK_DGRAM;
 
     const uint16_t MAX_AUTH_DATA_SIZE = 1024; // in bytes TODO maybe limited receiving
-    const uint16_t DEFAULT_BUFFER_SIZE = 1024; // bytes read write to/from network when datasize is unknown
+    const uint16_t DEFAULT_MSS = 1024; // default maximux segment size recv/send operations
     const data_size_t MAX_RECV_SEND_DATA_SIZE = 4294967295; //bytes //MAX_RECV_SEND_DATA_SIZE must  be related to data_size_t
-    const short DEFAULT_SOCKET_TIMEOUT = 1; //udp sockets use it
+    const uint16_t MAX_RECV_SIZE_THIS_HANDLER = 11000; //if received data size v=over it start handler in a new thread
+    //const short DEFAULT_SOCKET_TIMEOUT = 1; //udp sockets use it
 
     enum SocketError //todo make with real codes
     {
@@ -93,6 +96,8 @@ namespace cross_socket
     bool SetSockoptTCPKeepAlive(Socket conn_socket, int opt);
     void SetWIN_TCPNonBlockingTCPSocket(Socket socket);
     int GetSockoptError(Socket socket);
+
+    std::string GetIP_PortStringFromAddress(sockaddr_in& address); //return ip_addr:port string
 
     SocketError Server_InitTCP(Socket socket, uint16_t port, struct sockaddr_in &address);
     SocketError Server_Bind(Socket socket, uint16_t port, sockaddr_in &address);

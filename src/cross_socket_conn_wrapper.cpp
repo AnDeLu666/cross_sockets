@@ -79,6 +79,22 @@ namespace cross_socket
         });
     }
 
+    void ConnectionsWrapper::Set_bound_conn_key(std::string conn_key, std::string bound_conn_key)
+    {
+        ConnSetter<std::string>(conn_key, bound_conn_key, [](std::string bound_conn_key, ConnectionsMap::iterator conn_it)
+        {
+            conn_it->second->_bound_conn_key = bound_conn_key;
+        });
+    }
+    
+    std::string ConnectionsWrapper::Get_bound_conn_key(std::string conn_key)
+    {
+        return ConnGetter<std::string>(conn_key, "", [](ConnectionsMap::iterator conn_it)
+        {
+            return conn_it->second->_bound_conn_key;
+        });
+    }
+
     void ConnectionsWrapper::Set_conn_socket(std::string conn_key, Socket conn_socket)
     {
         ConnSetter<Socket>(conn_key, conn_socket, [](Socket conn_socket, ConnectionsMap::iterator conn_it)

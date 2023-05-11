@@ -12,16 +12,12 @@ namespace cross_socket
         private:
             bool ConnectToSocket(Socket socket, struct sockaddr_in& address);
 
+            virtual void SendHandler(std::string index) = 0; 
+
         public:
-            ConnectionsWrapper _cw;  // connections wrapper
-
             CrossSocketClnt(int socket_type, bool init_socket);
-            
-            virtual void MainHandler(std::string index) = 0; 
 
-            virtual void Connect(std::string ip_addr_str, uint16_t port);
-            virtual void Connect(std::string ip_addr_str, uint16_t port, std::string suffix_of_conn_key);
-            virtual bool Reconnect(std::string conn_key);
+            virtual std::string Connect(std::string ip_addr_str, uint16_t port);
 
             virtual void Disconnect(std::string conn_key);
 
