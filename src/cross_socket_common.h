@@ -10,6 +10,7 @@
 #include <functional>
 #include <vector>
 #include <mutex>
+#include <cstring>
 
 //#define _WIN64
 #ifdef _WIN64
@@ -41,7 +42,7 @@ typedef socklen_t Socklen_t;
 #define WIN_(exp)
 #endif
 
-#define DEBUG
+//#define DEBUG
 #ifdef DEBUG
 #define PRINT_DBG(exp, ...) printf((exp), ##__VA_ARGS__)
 #define ADD_DBG_CODE(exp) exp

@@ -12,6 +12,8 @@ TARGET22 = cs_clnt.exe
 #release
 CFLAGS = -O3 -DNDEBUG
 
+#gprof
+#CFLAGS = -Wall -pg
 
 
 CC = g++
@@ -25,7 +27,7 @@ SRC_DIR = ./src/
 OBJ_DIR = ./obj_linux/
 BIN_DIR = ./build_linux/
 INCL_LIBS = $(OBJ_DIR)cross_socket.o $(OBJ_DIR)cross_socket_common.o $(OBJ_DIR)cross_socket_conn.o $(OBJ_DIR)cross_socket_conn_wrapper.o
-INCL_CLNT = $(OBJ_DIR)cross_socket_clnt.o $(OBJ_DIR)cross_socket_clnt_udp.o $(OBJ_DIR)cross_socket_clnt_tcp.o
+INCL_CLNT = $(OBJ_DIR)cross_socket_clnt.o 
 INCL_SRV = $(OBJ_DIR)cross_socket_srv.o $(OBJ_DIR)cross_socket_srv_tcp.o $(OBJ_DIR)cross_socket_srv_udp.o
 LIB_HEADERS_DIR = ./cross_socket_lib_h/
 LIB_HEADERS_DIR_PROXY = ../rendezvous/cross_socket_lib_w_h/
@@ -34,7 +36,7 @@ LIB_HEADERS_L_DIR_PROXY = ../rendezvous/cross_socket_lib_h/
 OBJ_DIR_WIN = ./obj_windows/
 BIN_DIR_WIN = ./build_windows/
 INCL_LIBS_WIN = $(OBJ_DIR_WIN)cross_socket.o $(OBJ_DIR_WIN)cross_socket_common.o $(OBJ_DIR_WIN)cross_socket_conn.o $(OBJ_DIR_WIN)cross_socket_conn_wrapper.o
-INCL_CLNT_WIN = $(OBJ_DIR_WIN)cross_socket_clnt.o $(OBJ_DIR_WIN)cross_socket_clnt_udp.o $(OBJ_DIR_WIN)cross_socket_clnt_tcp.o
+INCL_CLNT_WIN = $(OBJ_DIR_WIN)cross_socket_clnt.o 
 INCL_SRV_WIN = $(OBJ_DIR_WIN)cross_socket_srv.o $(OBJ_DIR_WIN)cross_socket_srv_tcp.o $(OBJ_DIR_WIN)cross_socket_srv_udp.o
 
 SRC = $(wildcard $(SRC_DIR)*.cpp)

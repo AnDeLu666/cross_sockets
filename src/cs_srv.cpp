@@ -27,10 +27,10 @@ cross_socket::Buffer* RecvievedDataHandler(cross_socket::ConnectionsWrapper* cw,
         //first request to server must be less MAX_AUTH_DATA_SIZE bytes
         std::string session_key = cw->Get_session_key(conn_key);
 
-        if((session_key == "" && buff->data.size() <= cross_socket::MAX_AUTH_DATA_SIZE) || session_key != "")
+        if((session_key == "" && buff->real_bytes <= cross_socket::MAX_AUTH_DATA_SIZE) || session_key != "")
         {
 
-            buff->data.emplace_back(0); //string have to finish with 0
+            buff->data.emplace_back(0); //string have to finish with 0 //todo buff can be greater then real data
             std::string key = reinterpret_cast<const char*>(&(buff->data[0]));
 
             const cross_socket::byte_t* tmp_bytes;

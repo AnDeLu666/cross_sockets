@@ -12,14 +12,14 @@ namespace cross_socket
         private:
             bool ConnectToSocket(Socket socket, struct sockaddr_in& address);
 
-            virtual void SendHandler(std::string index) = 0; 
+            void SendHandler(std::string index); 
 
         public:
-            CrossSocketClnt(int socket_type, bool init_socket);
+            CrossSocketClnt(int socket_type);
 
-            virtual std::string Connect(std::string ip_addr_str, uint16_t port);
+            std::string Connect(std::string ip_addr_str, uint16_t port);
 
-            virtual void Disconnect(std::string conn_key);
+            void Disconnect(std::string conn_key);
 
             ~CrossSocketClnt();
 

@@ -37,8 +37,8 @@ namespace cross_socket
         void Set_received_data_handler(std::function<Buffer*(cross_socket::ConnectionsWrapper* cw, std::string conn_key, Buffer*)> func_ptr);
         void Set_default_send_data_mode(bool send_data); //true SendHandler will call func Send - false will not
 
-        cross_socket::Buffer* Recv(Socket recv_sock); // use in TCP
-        cross_socket::Buffer* Recv(Socket recv_sock, sockaddr_in& address);
+        cross_socket::Buffer* Recv(Socket recv_sock, byte_t* segment_buffer, Buffer* recv_buff); // use in TCP
+        cross_socket::Buffer* Recv(Socket recv_sock, sockaddr_in& address, byte_t* segment_buffer, Buffer* recv_buff);
 
         int Send(Socket send_sock, Buffer* buff); // use in TCP
         int Send(Socket send_sock, Buffer* buff, sockaddr_in& address);

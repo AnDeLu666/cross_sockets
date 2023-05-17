@@ -177,6 +177,15 @@ namespace cross_socket
         });
     }
 
+    // byte_t* ConnectionsWrapper::Get_segment_buffer_ptr(std::string conn_key)
+    // {
+    //     return ConnGetter<byte_t*>(conn_key, nullptr, [](ConnectionsMap::iterator conn_it)
+    //     {
+    //         return conn_it->second->_segment_buffer;
+    //     });
+
+    // }
+
     void ConnectionsWrapper::DeleteConnection(std::string conn_key)
     {
         _conn_mtx.lock();

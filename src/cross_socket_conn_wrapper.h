@@ -81,6 +81,8 @@ namespace cross_socket
         cross_socket::Buffer& Get_send_buffer_ref(std::string conn_key);
         bool If_send_buffer_is_nullptr(std::string conn_key);
 
+        //byte_t* Get_segment_buffer_ptr(std::string conn_key);
+
         void DeleteConnection(std::string conn_key);
 
         ~ConnectionsWrapper();

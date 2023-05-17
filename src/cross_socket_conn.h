@@ -29,6 +29,8 @@ namespace cross_socket
         sockaddr_in _address{}; 
 
         cross_socket::Buffer* _send_buffer_ptr = nullptr;
+        //byte_t* _segment_buffer = new byte_t[DEFAULT_MSS]{0};
+
         Connection(Socket conn_socket);
 
         void CloseSocket();

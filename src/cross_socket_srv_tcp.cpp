@@ -1,8 +1,5 @@
 #include "cross_socket_srv_tcp.h"
 
-//temporary
-#include <cstring>
-
 namespace cross_socket
 {
     CrossSocketSrvTCP::CrossSocketSrvTCP(uint16_t port)
@@ -51,29 +48,38 @@ namespace cross_socket
     void CrossSocketSrvTCP::ReceiveHandler(std::string conn_key) //separate thread for each client
     {   
         const short sleep_time_limit = 100;
-        short sleep_time = 1; //milliseconds it increases if not receive anything up to 
+        const short sleep_time_min = 10;
+        short sleep_time = sleep_time_min; //milliseconds it increases if not receive anything up to sleep_time_limit
 
         //int timer = 0;
 
+        auto conn_socket = _cw.Get_conn_socket(conn_key);
+        auto conn_address = _cw.Get_address_ref(conn_key);
+
+        cross_socket::Buffer* recv_buff = new Buffer;
+        byte_t* segment_buffer = new byte_t[DEFAULT_MSS]{0};
+
         while (_cw.Get_status(conn_key) == ConnStatuses::CONNECTED)
         {
-            auto recv_buff = Recv(_cw.Get_conn_socket(conn_key));
+            //recv_buff must be initialized or use recv_buff = Recv(..., nullptr instead of recv_buff)
+            recv_buff = Recv(conn_socket, segment_buffer, recv_buff);
 
-            if (GetSockoptError(_cw.Get_conn_socket(conn_key)) != SocketError::NO_ERRORS)
+            if (GetSockoptError(conn_socket) != SocketError::NO_ERRORS)
             {
                 _cw.Set_status(conn_key, ConnStatuses::DISCONNECT);
             }
-            else if(recv_buff->real_bytes > 0)
+            
+            if(recv_buff != nullptr)
             {
-                sleep_time = 1;
-                if(_received_data_handler != nullptr)
+                if(recv_buff->real_bytes > 0)
                 {
-                    SendHandler(conn_key, recv_buff);
+                    sleep_time = sleep_time_min;
+
+                    if(_received_data_handler != nullptr)
+                    {
+                        SendHandler(conn_key, recv_buff);
+                    }
                 }
-            }
-            else
-            {       
-                delete recv_buff;
             }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
@@ -95,6 +101,9 @@ namespace cross_socket
             // timer++;    
         }
 
+        delete recv_buff;
+        delete[] segment_buffer;
+
         //starting a new thread to destroy connection
         std::thread(&CrossSocketSrvTCP::DisconnectClient, this, conn_key).detach();
     }
@@ -113,8 +122,6 @@ namespace cross_socket
         }
 
         PRINT_DBG("GET OUT handler TCP server conn : %s\n", conn_key.c_str());
-
-        delete recv_buff;
 
     }
 

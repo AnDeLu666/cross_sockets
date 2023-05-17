@@ -22,11 +22,18 @@ namespace cross_socket
 
     void CrossSocketSrvUDP::AcceptHandler()
     {
-        cross_socket::Buffer *recv_buff;
+        const short sleep_time_limit = 100;
+        const short sleep_time_min = 1;
+        short sleep_time = sleep_time_min; //milliseconds it increases if not receive anything up to sleep_time_limit
+
+        //cross_socket::Buffer *recv_buff;
+        byte_t* segment_buffer = new byte_t[DEFAULT_MSS]{0};
 
         while (_status != SrvStatuses::STOP)
         {
-            recv_buff = Recv(_socket, _address);
+            //recv_buff must be initialized or use recv_buff = Recv(..., nullptr instead of recv_buff)
+            //nullptr - when received data creates new buffer
+            auto recv_buff = Recv(_socket, _address, segment_buffer, nullptr); 
             if (GetSockoptError(_socket) != SocketError::NO_ERRORS)
             {
                 auto conn_key = GetIP_PortStringFromAddress(_address);
@@ -38,44 +45,46 @@ namespace cross_socket
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 
-                delete recv_buff;
-                
                 break;
             }
 
-            if (recv_buff->real_bytes > 0)
+            if(recv_buff != nullptr)
             {
-                auto conn_key = GetIP_PortStringFromAddress(_address);
-
-                Socket conn_socket = _socket; // TODO get separate port and socket in a new thread
-
-                if (!_cw.Find(conn_key)) // TODO protection network atacks
+                if (recv_buff->real_bytes > 0)
                 {
-                    _cw.AddNewConnection(conn_key, conn_socket);
+                    sleep_time = sleep_time_min;
 
-                    sockaddr_in address{_address};
-                    _cw.Set_address_ref(conn_key, address);
-                }
-                
-                if(_received_data_handler != nullptr)
-                {
-                    if(recv_buff->data_size() < MAX_RECV_SIZE_THIS_HANDLER) //continue here
+                    auto conn_key = GetIP_PortStringFromAddress(_address);
+
+                    Socket conn_socket = _socket; // TODO get separate port and socket in a new thread
+
+                    if (!_cw.Find(conn_key)) // TODO protection network atacks
                     {
-                        SendHandler(conn_key, recv_buff);
+                        _cw.AddNewConnection(conn_key, conn_socket);
+
+                        sockaddr_in address{_address};
+                        _cw.Set_address_ref(conn_key, address);
                     }
-                    else //start a new thread
+                    
+                    if(_received_data_handler != nullptr)
                     {
-                        std::thread(&CrossSocketSrvUDP::SendHandler, this, conn_key, recv_buff).detach();
+                        if(recv_buff->real_bytes < MAX_RECV_SIZE_THIS_HANDLER) //continue here
+                        {
+                            SendHandler(conn_key, recv_buff);
+                        }
+                        else //start a new thread
+                        {
+                            std::thread(&CrossSocketSrvUDP::SendHandler, this, conn_key, recv_buff).detach();
+                        }
                     }
                 }
             }
-            else
-            {
-                delete recv_buff;
-            }
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
+            sleep_time = (sleep_time < sleep_time_limit) ? sleep_time + 1 : sleep_time_limit;
         }
+        
+        delete[] segment_buffer;
     }
 
     void CrossSocketSrvUDP::SendHandler(std::string conn_key, Buffer *recv_buff) // separate thread for each client
@@ -90,9 +99,9 @@ namespace cross_socket
                 _cw.DeleteConnection(conn_key);
             }
         }
-
+        
+        delete recv_buff;
         PRINT_DBG("GET OUT UDP SRV mainhandler_ptr conn : %s\n", conn_key.c_str());
-        delete recv_buff; // n=but it automaticaly should be deleted
     }
 
     CrossSocketSrvUDP::~CrossSocketSrvUDP()

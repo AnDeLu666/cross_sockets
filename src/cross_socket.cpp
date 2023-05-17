@@ -104,6 +104,7 @@ namespace cross_socket
         
         //#########End KeyUDP protocol description########
 
+        
         if (recv_bytes > 0)
         {
             if((_socket_type == UDP)) //todo add choosing protocol
@@ -133,32 +134,26 @@ namespace cross_socket
                     return true;
                 }
 
-                // if(user_data_size > 9000000)
-                // {
-                //     return true;
-                // }
-
-                if(buff->data_size() == 0)
+                if(buff->data_size() < user_data_size) //todo fit size from time to time
                 {   
-                    PRINT_DBG("!!!!!!!!!!!!try to reserve :::::::::::::::::::::::::::%li bytes\n", user_data_size);
-                    if(user_data_size > DEFAULT_MSS)
-                    {
-                        ADD_DBG_CODE(auto begin = std::chrono::steady_clock::now();)
-                        size_t tmp_sz = user_data_size + (user_data_size / DEFAULT_MSS + 1) * protocol_header_size;
-                        buff->data.reserve(tmp_sz);
+                    PRINT_DBG("!!!!!!!!!!!!try to resize :::::::::::::::::::::::::::%li bytes\n", user_data_size);
 
-                        ADD_DBG_CODE(
-                        auto end = std::chrono::steady_clock::now();
-                        auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
-                        )
+                    ADD_DBG_CODE(auto begin = std::chrono::steady_clock::now();)
+                    size_t tmp_sz = user_data_size + (user_data_size / DEFAULT_MSS + 1) * protocol_header_size;
+                    buff->data.resize(tmp_sz, 0);
 
-                        PRINT_DBG("!!!!!!!!!!!!reserve :::::::::::::::::::::::::::%d ms\n", elapsed_ms.count());
-                    }
+                    ADD_DBG_CODE(
+                    auto end = std::chrono::steady_clock::now();
+                    auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
+                    )
+
+                    PRINT_DBG("!!!!!!!!!!!!resize :::::::::::::::::::::::::::%d ms\n", elapsed_ms.count());
                 }
                 
                 PRINT_DBG("segment number : %d \n", user_data_seg_no);
                 ADD_DBG_CODE(auto begin = std::chrono::steady_clock::now();)
-                buff->data.insert(buff->data.end(), buffer + protocol_header_size, buffer + recv_bytes);
+                memcpy(&buff->data[buff->real_bytes], buffer + protocol_header_size , (recv_bytes - protocol_header_size) * sizeof(byte_t));
+                //buff->data.insert(buff->data.end(), buffer + protocol_header_size, buffer + recv_bytes);
                 ADD_DBG_CODE(
                 auto end = std::chrono::steady_clock::now();
                 auto elapsed_micros = std::chrono::duration_cast<std::chrono::microseconds>(end - begin);
@@ -171,13 +166,22 @@ namespace cross_socket
                 if(buff->real_bytes >= user_data_size)
                 {
                     res = true;
-                }            
+                }          
             }
             else
             {
                 PRINT_DBG("Dbg TCP :::::::::::::::::::::::::::::::::uder data: %d \n", user_data_size);
                 ADD_DBG_CODE(auto begin = std::chrono::steady_clock::now();)
-                buff->data.insert(buff->data.end(), buffer, buffer + recv_bytes);
+                
+                PRINT_DBG("Dbg TCP capacity::::%lli::: %lli \n", buff->data.capacity(),  buff->real_bytes);
+                if(buff->data_size() < (buff->real_bytes + recv_bytes))
+                {
+                    PRINT_DBG("Dbg TCP resize:::::::::::::::::::::::::::::: %lli \n", buff->real_bytes + recv_bytes);
+                    buff->data.resize((buff->real_bytes + recv_bytes), 0);
+                }
+
+                memcpy(&buff->data[buff->real_bytes], buffer, recv_bytes * sizeof(byte_t));
+                //buff->data.insert(buff->data.end(), buffer, buffer + recv_bytes);
                 
                 ADD_DBG_CODE(
                 auto end = std::chrono::steady_clock::now();
@@ -206,58 +210,62 @@ namespace cross_socket
     }
 
 
-    cross_socket::Buffer* CrossSocket::Recv(Socket recv_sock)
+    cross_socket::Buffer* CrossSocket::Recv(Socket recv_sock, byte_t* segment_buffer, Buffer* recv_buff)
     {
         //tcp bind to socket
         sockaddr_in address{};
-        return Recv(recv_sock, address);
+        return Recv(recv_sock, address, segment_buffer, recv_buff);
     }
 
-    cross_socket::Buffer* CrossSocket::Recv(Socket recv_sock, sockaddr_in &address)
+    cross_socket::Buffer* CrossSocket::Recv(Socket recv_sock, sockaddr_in &address, byte_t* segment_buffer, Buffer* recv_buff)
     {
-        Buffer *buff = new cross_socket::Buffer{};
-
         if (recv_sock < 0)
         {
-            return buff;
+            return nullptr;
         }
 
         Socklen_t len = sizeof(address);
 
         My_ssize_t recv_bytes = 0;
 
-        buff->real_bytes = 0;
+        if(recv_buff != nullptr)
+        {
+            recv_buff->real_bytes = 0;
+        }
 
-        byte_t *buffer;
         data_size_t buff_size = DEFAULT_MSS; //default  segment size for all protocols
         
         bool exit = false;
         int timer = 0;
+
         do 
         {
             recv_bytes = 0;
 
-            buffer = new byte_t[buff_size]{'\0'};
-
             // recieve data
             if (_socket_type == TCP)
             {
-                recv_bytes = recv(recv_sock, WIN_(reinterpret_cast<char *>)(buffer), buff_size, 0 NIX_(| MSG_DONTWAIT ));
+                recv_bytes = recv(recv_sock, WIN_(reinterpret_cast<char *>)(segment_buffer), buff_size, 0 NIX_(| MSG_DONTWAIT ));
             }
             else if (_socket_type == UDP)
             {
                 // winsocks do not support MSG_DONTWAIT MSG_WAITALL for UDP(SOCK_DGRAM) sockets
-                recv_bytes = recvfrom(recv_sock, WIN_(reinterpret_cast<char *>)(buffer), buff_size, 0 NIX_(| MSG_DONTWAIT),
+                recv_bytes = recvfrom(recv_sock, WIN_(reinterpret_cast<char *>)(segment_buffer), buff_size, 0 NIX_(| MSG_DONTWAIT),
                                         reinterpret_cast<sockaddr *>(&address), &len);
             }
 
-            exit = ProtocolHandlerRecv(recv_bytes, buff, buffer);
-
             if (recv_bytes > 0)
             {
+                if(recv_buff == nullptr)
+                {
+                    recv_buff = new Buffer{};
+                }
+
                 timer = 0;
-                PRINT_DBG("GET recieved bytes %lld buffer size %d socket : %d\n", buff->real_bytes, buff_size, recv_sock);
+                PRINT_DBG("GET recieved bytes %lld buffer size %d socket : %d\n", recv_buff->real_bytes + recv_bytes, buff_size, recv_sock);
             }
+
+            exit = ProtocolHandlerRecv(recv_bytes, recv_buff, segment_buffer);
 
             std::this_thread::sleep_for(std::chrono::milliseconds(1));          
 
@@ -269,11 +277,9 @@ namespace cross_socket
             }
             timer++;
 
-            delete[] buffer;
-
         } while (!exit);
 
-        return buff;
+        return recv_buff;
     }
 
     
@@ -292,6 +298,8 @@ namespace cross_socket
         //------rest up to buff_size is user data--------
         
         //#########End KeyUDP protocol description########
+
+        data_size_t data_size = static_cast<data_size_t>(real_data_size);
 
         if((_socket_type == UDP)) //todo add choosing protocol
         {
@@ -320,9 +328,11 @@ namespace cross_socket
             // for(short x = 0; x < protocol_header_size; x++)
             //     PRINT_DBG("|%d", buff.data[x]);
             // PRINT_DBG("\n");
-        }
 
-        data_size_t data_size = static_cast<data_size_t>(buff.data_size());
+
+            data_size += protocol_header_size * (data_size / DEFAULT_MSS +1);
+        }
+        
         return (((data_size - buff.real_bytes) < DEFAULT_MSS) ? (data_size - buff.real_bytes) : DEFAULT_MSS);
                 
     }
@@ -346,24 +356,17 @@ namespace cross_socket
             buff->data.emplace_back(0);
         }
 
-        data_size_t real_data_size = static_cast<data_size_t>(buff->data_size());
+        data_size_t real_data_size = static_cast<data_size_t>(buff->real_bytes);
 
-        buff->data.reserve((buff->data_size() / DEFAULT_MSS + 1)*8);
+        //buff->data.reserve((real_data_size / DEFAULT_MSS + 1)*8);
 
         Socklen_t len = sizeof(address);
 
         My_ssize_t sent_bytes = 0;
         buff->real_bytes = 0;
 
-        if (buff->data_size() <= MAX_RECV_SEND_DATA_SIZE) //MAX_RECV_SEND_DATA_SIZE must  be related to data_size_t
+        if (real_data_size <= MAX_RECV_SEND_DATA_SIZE) //MAX_RECV_SEND_DATA_SIZE must  be related to data_size_t
         {
-            // test_use
-            // PRINT_DBG("list of accepted values\n");
-            // PRINT_DBG("data_size : %d \n", data_size);
-            // for(const byte_t x: buff.data)
-            //    PRINT_DBG("%c", char(x));
-            // PRINT_DBG("\n");
-
             do
             {
                 sent_bytes = 0;
@@ -392,7 +395,14 @@ namespace cross_socket
                 PRINT_DBG("GET________________inside sent_bytes : %lli real_bytes : %lli real_data_size : %lli\n", 
                 sent_bytes, buff->real_bytes, real_data_size);
 
-            } while (sent_bytes > 0 && buff->real_bytes < buff->data_size());
+            } while (sent_bytes > 0 && buff->real_bytes < real_data_size);
+
+            // test_use
+            // PRINT_DBG("list of accepted values\n");
+            // PRINT_DBG("data_size : %d \n", real_data_size);
+            // for(const byte_t x: buff->data)
+            //    PRINT_DBG("%c", char(x));
+            // PRINT_DBG("\n");
             
         }
 

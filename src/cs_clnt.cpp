@@ -1,13 +1,13 @@
 #include <iostream>
 
-#include "cross_socket_clnt_tcp.h"
-#include "cross_socket_clnt_udp.h"
+#include "cross_socket_clnt.h"
+
 
 
 int main(int argc, char const* argv[]) 
 {   
-    cross_socket::CrossSocketClntTCP clnt;
-    //cross_socket::CrossSocketClntUDP clnt;
+    cross_socket::CrossSocketClnt clnt(cross_socket::TCP);
+    //cross_socket::CrossSocketClnt clnt(cross_socket::UDP);
 
     std::string conn_key = clnt.Connect("127.0.0.1", 8666);
     //clnt.Connect("192.168.1.64", 8666);
@@ -65,6 +65,7 @@ int main(int argc, char const* argv[])
                                 
                                 cross_socket::Buffer* send_buff = new cross_socket::Buffer{};
                                 send_buff->data.insert(send_buff->data.end(),tmp, tmp + data.size());
+                                send_buff->real_bytes = data.size(); // send func use it
 
                                 clnt._cw.Set_send_buffer_ptr(conn_key, send_buff);
                             }
